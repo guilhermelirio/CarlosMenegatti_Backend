@@ -3,8 +3,13 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\Login;
+use App\Filament\Pages\Tenancy\EditOrganizationProfile;
+use App\Filament\Pages\Tenancy\RegisterOrganization;
 use App\Filament\Widgets\CashSummary;
 use App\Filament\Widgets\UpcomingSessions;
+use App\Http\Middleware\SetCurrentOrganizationFromFilament;
+use App\Models\Organization;
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -31,9 +36,12 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->tenant(Organization::class, slugAttribute: 'slug')
+            ->tenantRegistration(RegisterOrganization::class)
+            ->tenantProfile(EditOrganizationProfile::class)
             ->login(Login::class)
             ->spa()
-            ->brandName('Carlos Menegatti FC')
+            ->brandName(fn (): string => Filament::getTenant()?->getAttribute('name') ?? (string) config('app.name'))
             ->brandLogo(asset('logo.svg'))
             ->darkModeBrandLogo(asset('logo-dark.svg'))
             ->brandLogoHeight('2.5rem')
@@ -50,7 +58,7 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::SIMPLE_PAGE_END,
                 fn () => new HtmlString(
                     '<div class="pcm-footer">Controle de mensalidades &amp; caixa &middot; &copy; '
-                    .date('Y').' Carlos Menegatti FC</div>'
+                    .date('Y').' '.e(Filament::getTenant()?->getAttribute('name') ?? config('app.name')).'</div>'
                 ),
             )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
@@ -76,6 +84,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->tenantMiddleware([
+                SetCurrentOrganizationFromFilament::class,
+            ], isPersistent: true);
     }
 }

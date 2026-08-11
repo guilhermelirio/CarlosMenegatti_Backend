@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\FeeStatus;
+use App\Models\Concerns\BelongsToOrganization;
 use Database\Factories\MonthlyFeeFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class MonthlyFee extends Model
 {
     /** @use HasFactory<MonthlyFeeFactory> */
-    use HasFactory, HasUlids;
+    use BelongsToOrganization, HasFactory, HasUlids;
 
     protected $fillable = [
         'player_id',

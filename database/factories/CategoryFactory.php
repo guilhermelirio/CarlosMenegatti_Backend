@@ -6,6 +6,8 @@ namespace Database\Factories;
 
 use App\Enums\TransactionType;
 use App\Models\Category;
+use App\Models\Organization;
+use App\Tenancy\CurrentOrganization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,6 +20,7 @@ class CategoryFactory extends Factory
     public function definition(): array
     {
         return [
+            'organization_id' => app(CurrentOrganization::class)->id() ?? Organization::factory(),
             'name' => fake()->words(2, true),
             'type' => fake()->randomElement(TransactionType::cases()),
             'is_system' => false,

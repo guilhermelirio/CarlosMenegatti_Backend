@@ -6,9 +6,11 @@ namespace App\Jobs;
 
 use App\Enums\PaymentStatus;
 use App\Integrations\Pix\Dto\CanonicalPixStatus;
+use App\Models\Organization;
 use App\Models\Payment;
 use App\Models\WebhookEvent;
 use App\Services\Billing\PaymentService;
+use App\Tenancy\CurrentOrganization;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -24,6 +26,7 @@ class ProcessPixWebhookJob implements ShouldQueue
     public array $tags = ['pix', 'webhook'];
 
     public function __construct(
+        private readonly string $organizationId,
         private readonly string $webhookEventId,
         private readonly string $txid,
         private readonly string $status,
@@ -35,8 +38,11 @@ class ProcessPixWebhookJob implements ShouldQueue
         return [10, 30, 60, 300];
     }
 
-    public function handle(PaymentService $payments): void
+    public function handle(PaymentService $payments, CurrentOrganization $currentOrganization): void
     {
+        $organization = Organization::query()->findOrFail($this->organizationId);
+        $currentOrganization->set($organization);
+
         $status = CanonicalPixStatus::tryFrom($this->status) ?? CanonicalPixStatus::Unknown;
 
         $payment = Payment::query()->where('pix_txid', $this->txid)->first();
@@ -51,6 +57,8 @@ class ProcessPixWebhookJob implements ShouldQueue
 
         WebhookEvent::query()->whereKey($this->webhookEventId)
             ->update(['processed_at' => CarbonImmutable::now()]);
+
+        $currentOrganization->clear();
     }
 
     public function failed(\Throwable $e): void

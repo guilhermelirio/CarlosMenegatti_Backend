@@ -12,9 +12,11 @@ return new class extends Migration
     {
         Schema::create('settings', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->string('key')->unique();
+            $table->foreignUlid('organization_id')->constrained()->cascadeOnDelete();
+            $table->string('key');
             $table->text('value')->nullable();
             $table->timestampsTz();
+            $table->unique(['organization_id', 'key']);
         });
     }
 

@@ -13,3 +13,4 @@ Artisan::command('inspire', function () {
 // Generate this month's monthly fees on the 1st, then flag overdue ones daily.
 Schedule::command('fees:generate-monthly')->monthlyOn(1, '06:00');
 Schedule::command('fees:mark-overdue')->dailyAt('06:30');
+Schedule::command('horizon:snapshot')->everyFiveMinutes();

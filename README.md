@@ -1,58 +1,55 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Backend multi-tenant para grupos de futebol
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+API e painel administrativo para múltiplas organizações, construídos com Laravel 13, Filament 4, PostgreSQL e Redis. O nome comercial do produto ainda não foi definido; `Organization` é apenas o nome técnico do tenant.
 
-## About Laravel
+## Arquitetura
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Cada tabela de domínio possui `organization_id` e um escopo global obrigatório.
+- Usuários pertencem a organizações por `organization_user`, com papel `admin` ou `member`.
+- A API usa Sanctum e resolve o tenant por `X-Organization-Id`. O cabeçalho é opcional quando o usuário possui uma única organização.
+- O Filament usa tenancy nativa em `/admin/{organization-slug}`.
+- Administradores podem criar organizações em `/admin/new`, editar o perfil do tenant e gerenciar usuários e papéis pelo próprio painel.
+- Cada organização mantém pelo menos um administrador; remover um vínculo nunca apaga a conta global do usuário.
+- Horizon processa filas Redis; o scheduler roda separadamente; Pulse fica disponível para administradores.
+- Reverb não faz parte da stack enquanto não existir um caso real de atualização em tempo real.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Desenvolvimento com Sail
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+cp .env.example .env
+composer install
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan migrate --seed
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Para executar servidor, Horizon, scheduler, logs e Vite juntos:
 
-## Contributing
+```bash
+./vendor/bin/sail composer dev
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Produção
 
-## Code of Conduct
+A stack de referência usa Nginx + PHP-FPM 8.5 + OPcache, com processos separados para Horizon e scheduler.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+cp .env.production.example .env.production
+# preencha APP_KEY, senhas, domínio e e-mail
+docker compose --env-file .env.production -f compose.prod.yaml build
+docker compose --env-file .env.production -f compose.prod.yaml run --rm app php artisan migrate --force
+docker compose --env-file .env.production -f compose.prod.yaml up -d
+```
 
-## Security Vulnerabilities
+O deploy deve executar `php artisan optimize` após as variáveis definitivas estarem disponíveis. Como `opcache.validate_timestamps=0` em produção, publique uma nova imagem ou reinicie os processos a cada release.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Qualidade
 
-## License
+```bash
+composer test
+vendor/bin/phpstan analyse --memory-limit=1G
+vendor/bin/pint --test
+composer audit
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Documentação da API: `/docs/api`. Horizon: `/horizon`. Pulse: `/pulse`.

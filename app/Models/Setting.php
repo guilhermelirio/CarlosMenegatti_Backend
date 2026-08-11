@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
+use App\Tenancy\CurrentOrganization;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
 class Setting extends Model
 {
-    use HasUlids;
+    use BelongsToOrganization, HasUlids;
 
     protected $fillable = ['key', 'value'];
 
@@ -31,7 +33,7 @@ class Setting extends Model
     public static function get(string $key, ?string $default = null): ?string
     {
         return Cache::rememberForever(
-            "setting:{$key}",
+            self::cacheKey($key),
             fn () => static::query()->where('key', $key)->value('value') ?? $default,
         );
     }
@@ -46,12 +48,19 @@ class Setting extends Model
     public static function set(string $key, string $value): void
     {
         static::query()->updateOrCreate(['key' => $key], ['value' => $value]);
-        Cache::forget("setting:{$key}");
+        Cache::forget(self::cacheKey($key));
     }
 
     protected static function booted(): void
     {
-        static::saved(fn (Setting $setting) => Cache::forget("setting:{$setting->key}"));
-        static::deleted(fn (Setting $setting) => Cache::forget("setting:{$setting->key}"));
+        static::saved(fn (Setting $setting) => Cache::forget(self::cacheKey($setting->key, $setting->organization_id)));
+        static::deleted(fn (Setting $setting) => Cache::forget(self::cacheKey($setting->key, $setting->organization_id)));
+    }
+
+    private static function cacheKey(string $key, ?string $organizationId = null): string
+    {
+        $organizationId ??= app(CurrentOrganization::class)->id();
+
+        return "organization:{$organizationId}:setting:{$key}";
     }
 }

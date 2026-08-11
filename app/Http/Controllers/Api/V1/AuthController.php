@@ -6,8 +6,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Data\V1\Auth\AuthTokenData;
 use App\Data\V1\Auth\LoginData;
+use App\Data\V1\Organization\OrganizationData;
 use App\Data\V1\Player\PlayerData;
+use App\Models\Organization;
 use App\Models\User;
+use App\Tenancy\CurrentOrganization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -21,7 +24,7 @@ class AuthController extends ApiController
      *
      * @unauthenticated
      */
-    public function login(LoginData $data): JsonResponse
+    public function login(LoginData $data, Request $request, CurrentOrganization $currentOrganization): JsonResponse
     {
         $user = User::query()->where('email', $data->email)->first();
 
@@ -31,7 +34,29 @@ class AuthController extends ApiController
             ]);
         }
 
-        if ($user->player === null) {
+        $organizations = $user->organizations()->get();
+        $requestedId = $request->header('X-Organization-Id');
+
+        /** @var Organization|null $activeOrganization */
+        $activeOrganization = $requestedId !== null
+            ? $organizations->firstWhere('id', $requestedId)
+            : ($organizations->count() === 1 ? $organizations->first() : null);
+
+        if ($requestedId !== null && $activeOrganization === null) {
+            throw ValidationException::withMessages([
+                'organization' => ['Organização inválida para este usuário.'],
+            ]);
+        }
+
+        if ($activeOrganization !== null) {
+            $currentOrganization->set($activeOrganization);
+        }
+
+        $player = $activeOrganization === null ? null : $user->players()->first();
+
+        if ($organizations->isEmpty() || ($activeOrganization !== null && $player === null)) {
+            $currentOrganization->clear();
+
             throw ValidationException::withMessages([
                 'email' => ['Este login não está vinculado a um atleta.'],
             ]);
@@ -42,8 +67,14 @@ class AuthController extends ApiController
         $payload = new AuthTokenData(
             token: $token,
             token_type: 'Bearer',
-            player: PlayerData::fromModel($user->player),
+            active_organization_id: $activeOrganization?->id,
+            organizations: $organizations->map(
+                fn (Organization $organization) => OrganizationData::fromModel($organization),
+            )->all(),
+            player: $player === null ? null : PlayerData::fromModel($player),
         );
+
+        $currentOrganization->clear();
 
         // Login is not a resource creation -> 200 (Data responses default to 201).
         return response()->json($payload);

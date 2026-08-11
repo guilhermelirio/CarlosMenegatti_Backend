@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\OrganizationRole;
 use App\Enums\PaymentMethod;
 use App\Enums\PlayerStatus;
 use App\Enums\TransactionType;
 use App\Models\Category;
 use App\Models\GameSession;
+use App\Models\Organization;
 use App\Models\Player;
 use App\Models\Setting;
 use App\Models\User;
@@ -16,6 +18,7 @@ use App\Services\Attendance\AttendanceService;
 use App\Services\Billing\FeeGenerationService;
 use App\Services\Billing\PaymentService;
 use App\Services\CashFlow\CashFlowService;
+use App\Tenancy\CurrentOrganization;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -25,10 +28,16 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $organization = Organization::query()->firstOrCreate(
+            ['slug' => 'carlos-menegatti-fc'],
+            ['name' => 'Carlos Menegatti FC'],
+        );
+        app(CurrentOrganization::class)->set($organization);
+
         $this->seedSettings();
-        $this->seedAdmin();
+        $this->seedAdmin($organization);
         $categories = $this->seedCategories();
-        [$monthlyPlayers, $dailyPlayers] = $this->seedPlayers();
+        [$monthlyPlayers, $dailyPlayers] = $this->seedPlayers($organization);
         $this->seedFeesAndPayments($monthlyPlayers);
         $this->seedSessionsAndAttendance($monthlyPlayers, $dailyPlayers);
         $this->seedManualExpenses($categories);
@@ -41,22 +50,26 @@ class DatabaseSeeder extends Seeder
         Setting::set(Setting::MONTHLY_FEE_DUE_DAY, '10');
 
         // Pix manual — chave/recebedor placeholder (o tesoureiro ajusta no painel).
-        Setting::set(Setting::PIX_KEY, 'pelada@exemplo.com');
+        Setting::set(Setting::PIX_KEY, 'grupo@exemplo.com');
         Setting::set(Setting::PIX_KEY_TYPE, 'email');
         Setting::set(Setting::PIX_RECEIVER_NAME, 'PELADA C MENEGATTI');
         Setting::set(Setting::PIX_CITY, 'SAO PAULO');
     }
 
-    private function seedAdmin(): void
+    private function seedAdmin(Organization $organization): void
     {
-        User::query()->updateOrCreate(
-            ['email' => 'admin@pelada.test'],
+        $admin = User::query()->updateOrCreate(
+            ['email' => 'admin@grupo.test'],
             [
                 'name' => 'Carlos Menegatti (Tesoureiro)',
                 'password' => Hash::make('password'),
                 'is_staff' => true,
             ],
         );
+
+        $organization->users()->syncWithoutDetaching([
+            $admin->id => ['role' => OrganizationRole::Admin->value],
+        ]);
     }
 
     /** @return array<string, Category> */
@@ -85,22 +98,23 @@ class DatabaseSeeder extends Seeder
     }
 
     /** @return array{0: Collection<int, Player>, 1: Collection<int, Player>} */
-    private function seedPlayers(): array
+    private function seedPlayers(Organization $organization): array
     {
         // Monthly members (mensalistas) — one with an app login.
         $appUser = User::query()->create([
             'name' => 'Atleta App',
-            'email' => 'atleta@pelada.test',
+            'email' => 'atleta@grupo.test',
             'password' => Hash::make('password'),
             'is_staff' => false,
         ]);
+        $organization->users()->attach($appUser->id, ['role' => OrganizationRole::Member->value]);
 
         $monthly = collect();
         $monthly->push(Player::factory()->monthly()->create([
             'name' => 'Ronaldo Nazário',
             'nickname' => 'Fenômeno',
             'user_id' => $appUser->id,
-            'email' => 'atleta@pelada.test',
+            'email' => 'atleta@grupo.test',
         ]));
         $monthly = $monthly->concat(Player::factory()->count(7)->monthly()->create());
 

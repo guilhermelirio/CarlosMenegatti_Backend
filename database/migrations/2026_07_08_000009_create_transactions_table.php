@@ -12,6 +12,7 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->foreignUlid('organization_id')->constrained()->cascadeOnDelete();
             $table->string('type'); // TransactionType
             $table->foreignUlid('category_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignUlid('player_id')->nullable()->constrained()->nullOnDelete();
@@ -21,7 +22,7 @@ return new class extends Migration
             $table->string('description')->nullable();
             $table->timestampsTz();
 
-            $table->index(['type', 'occurred_on']);
+            $table->index(['organization_id', 'type', 'occurred_on']);
             $table->index('occurred_on');
         });
     }

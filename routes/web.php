@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/admin');
 
-// Exportação de relatórios em PDF (usa a sessão do painel; checa is_staff no controller).
-Route::get('reports/pdf', ReportPdfController::class)
+// Exportação de relatórios em PDF usando a sessão do painel e o tenant explícito.
+Route::get('admin/{organization:slug}/reports/pdf', ReportPdfController::class)
     ->middleware('auth')
     ->name('reports.pdf');

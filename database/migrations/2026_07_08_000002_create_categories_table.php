@@ -12,12 +12,13 @@ return new class extends Migration
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->foreignUlid('organization_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('type'); // matches TransactionType::cases()
             $table->boolean('is_system')->default(false);
             $table->timestampsTz();
 
-            $table->index(['type', 'name']);
+            $table->index(['organization_id', 'type', 'name']);
         });
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use Database\Factories\GameSessionFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class GameSession extends Model
 {
     /** @use HasFactory<GameSessionFactory> */
-    use HasFactory, HasUlids;
+    use BelongsToOrganization, HasFactory, HasUlids;
 
     protected $fillable = [
         'scheduled_date',

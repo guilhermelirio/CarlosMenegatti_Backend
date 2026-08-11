@@ -12,6 +12,7 @@ return new class extends Migration
     {
         Schema::create('attendances', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->foreignUlid('organization_id')->constrained()->cascadeOnDelete();
             $table->foreignUlid('player_id')->constrained()->cascadeOnDelete();
             $table->foreignUlid('game_session_id')->constrained()->cascadeOnDelete();
             $table->boolean('confirmed')->default(false);

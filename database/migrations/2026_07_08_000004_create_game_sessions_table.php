@@ -12,6 +12,7 @@ return new class extends Migration
     {
         Schema::create('game_sessions', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->foreignUlid('organization_id')->constrained()->cascadeOnDelete();
             $table->date('scheduled_date');
             $table->time('start_time')->nullable();
             $table->string('location')->nullable();
@@ -19,7 +20,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestampsTz();
 
-            $table->index('scheduled_date');
+            $table->index(['organization_id', 'scheduled_date']);
         });
     }
 

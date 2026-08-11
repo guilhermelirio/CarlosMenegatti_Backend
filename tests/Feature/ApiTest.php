@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\FeeStatus;
+use App\Enums\OrganizationRole;
 use App\Enums\PaymentStatus;
 use App\Models\MonthlyFee;
+use App\Models\Organization;
 use App\Models\Payment;
 use App\Models\Player;
 use App\Models\Setting;
 use App\Models\User;
+use App\Tenancy\CurrentOrganization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -22,6 +25,7 @@ class ApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->setCurrentOrganization();
         Setting::set(Setting::DEFAULT_MONTHLY_FEE_CENTS, '5000');
         Setting::set(Setting::DEFAULT_DAILY_FEE_CENTS, '2000');
     }
@@ -30,6 +34,7 @@ class ApiTest extends TestCase
     {
         $user = User::factory()->create(['password' => bcrypt('password')]);
         Player::factory()->monthly()->create(['user_id' => $user->id]);
+        $this->organization->users()->attach($user->id, ['role' => OrganizationRole::Member->value]);
 
         return $user;
     }
@@ -125,5 +130,36 @@ class ApiTest extends TestCase
         $this->postJson('/api/webhooks/pix/fake/wrong-secret', [
             'txid' => 'x', 'status' => 'PAID',
         ])->assertStatus(401);
+    }
+
+    public function test_user_with_multiple_organizations_must_select_one(): void
+    {
+        $user = $this->playerUser();
+        $other = Organization::factory()->create();
+        $other->users()->attach($user->id, ['role' => OrganizationRole::Member->value]);
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/v1/me')
+            ->assertUnprocessable()
+            ->assertJsonPath('error_code', 'ORGANIZATION_REQUIRED');
+
+        $this->withHeader('X-Organization-Id', $this->organization->id)
+            ->getJson('/api/v1/me')
+            ->assertOk();
+    }
+
+    public function test_route_binding_cannot_resolve_another_organizations_fee(): void
+    {
+        $user = $this->playerUser();
+        Sanctum::actingAs($user);
+
+        $other = Organization::factory()->create();
+        app(CurrentOrganization::class)->set($other);
+        $otherFee = MonthlyFee::factory()->create(['status' => FeeStatus::Pending]);
+        app(CurrentOrganization::class)->set($this->organization);
+
+        $this->withHeader('X-Organization-Id', $this->organization->id)
+            ->postJson("/api/v1/monthly-fees/{$otherFee->id}/pix")
+            ->assertNotFound();
     }
 }

@@ -24,7 +24,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="club">Carlos Menegatti FC</div>
+        <div class="club">{{ $organizationName }}</div>
         <div class="sub">Relatório financeiro &middot; Período: {{ $periodLabel }} &middot; Gerado em {{ $generatedAt }}</div>
     </div>
 
@@ -80,7 +80,7 @@
             @endif
         </table>
 
-        <div class="foot">Carlos Menegatti FC — documento gerado automaticamente pelo sistema de controle de mensalidades.</div>
+        <div class="foot">{{ $organizationName }} — documento gerado automaticamente pelo sistema de controle financeiro.</div>
     </div>
 </body>
 </html>

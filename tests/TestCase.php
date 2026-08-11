@@ -2,11 +2,23 @@
 
 namespace Tests;
 
+use App\Models\Organization;
+use App\Tenancy\CurrentOrganization;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use RuntimeException;
 
 abstract class TestCase extends BaseTestCase
 {
+    protected Organization $organization;
+
+    protected function setCurrentOrganization(?Organization $organization = null): Organization
+    {
+        $this->organization = $organization ?? Organization::factory()->create();
+        app(CurrentOrganization::class)->set($this->organization);
+
+        return $this->organization;
+    }
+
     /**
      * Trava de segurança: nunca deixe a suíte (RefreshDatabase) rodar contra um
      * banco que não seja o de testes. Sem isto, rodar os testes com a config

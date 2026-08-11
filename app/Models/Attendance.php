@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use App\Observers\AttendanceObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[ObservedBy(AttendanceObserver::class)]
 class Attendance extends Model
 {
-    use HasFactory, HasUlids;
+    use BelongsToOrganization, HasFactory, HasUlids;
 
     protected $fillable = [
         'player_id',

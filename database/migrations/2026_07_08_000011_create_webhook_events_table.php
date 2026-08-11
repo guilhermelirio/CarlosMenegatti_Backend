@@ -12,13 +12,14 @@ return new class extends Migration
     {
         Schema::create('webhook_events', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->foreignUlid('organization_id')->constrained()->cascadeOnDelete();
             $table->string('provider');
             $table->string('external_id');
             $table->json('payload')->nullable();
             $table->timestampTz('processed_at')->nullable();
             $table->timestampsTz();
 
-            $table->unique(['provider', 'external_id']);
+            $table->unique(['organization_id', 'provider', 'external_id']);
         });
     }
 

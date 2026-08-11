@@ -7,7 +7,9 @@ namespace Database\Factories;
 use App\Enums\MembershipType;
 use App\Enums\PlayerPosition;
 use App\Enums\PlayerStatus;
+use App\Models\Organization;
 use App\Models\Player;
+use App\Tenancy\CurrentOrganization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,6 +22,7 @@ class PlayerFactory extends Factory
     public function definition(): array
     {
         return [
+            'organization_id' => app(CurrentOrganization::class)->id() ?? Organization::factory(),
             'user_id' => null,
             'name' => fake()->name(),
             'nickname' => fake()->optional(0.6)->firstName(),

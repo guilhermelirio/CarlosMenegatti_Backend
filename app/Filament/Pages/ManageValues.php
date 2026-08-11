@@ -80,7 +80,7 @@ class ManageValues extends Page implements HasSchemas
                     ->columns(3),
 
                 Section::make('Recebimento via Pix (manual)')
-                    ->description('Chave Pix da pelada usada para gerar o copia-e-cola/QR. O pagamento é confirmado manualmente pelo tesoureiro ao dar baixa.')
+                    ->description('Chave Pix da organização usada para gerar o copia-e-cola/QR. O pagamento é confirmado manualmente pelo tesoureiro ao dar baixa.')
                     ->schema([
                         Select::make('pix_key_type')
                             ->label('Tipo da chave')

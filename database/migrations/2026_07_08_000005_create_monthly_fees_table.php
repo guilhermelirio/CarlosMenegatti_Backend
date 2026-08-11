@@ -12,6 +12,7 @@ return new class extends Migration
     {
         Schema::create('monthly_fees', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->foreignUlid('organization_id')->constrained()->cascadeOnDelete();
             $table->foreignUlid('player_id')->constrained()->cascadeOnDelete();
             $table->unsignedSmallInteger('reference_year');
             $table->unsignedTinyInteger('reference_month');
@@ -22,7 +23,7 @@ return new class extends Migration
             $table->timestampsTz();
 
             $table->unique(['player_id', 'reference_year', 'reference_month']);
-            $table->index(['status', 'due_date']);
+            $table->index(['organization_id', 'status', 'due_date']);
         });
     }
 

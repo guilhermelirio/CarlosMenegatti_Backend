@@ -12,6 +12,7 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->foreignUlid('organization_id')->constrained()->cascadeOnDelete();
             $table->foreignUlid('player_id')->constrained()->cascadeOnDelete();
             $table->ulidMorphs('payable'); // monthly_fee or daily_fee
             $table->bigInteger('amount_cents');
@@ -29,7 +30,7 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestampsTz();
 
-            $table->index(['status', 'method']);
+            $table->index(['organization_id', 'status', 'method']);
         });
     }
 

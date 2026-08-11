@@ -6,7 +6,9 @@ namespace Database\Factories;
 
 use App\Enums\TransactionType;
 use App\Models\Category;
+use App\Models\Organization;
 use App\Models\Transaction;
+use App\Tenancy\CurrentOrganization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,6 +23,7 @@ class TransactionFactory extends Factory
         $type = fake()->randomElement(TransactionType::cases());
 
         return [
+            'organization_id' => app(CurrentOrganization::class)->id() ?? Organization::factory(),
             'type' => $type,
             'category_id' => Category::factory()->state(['type' => $type]),
             'player_id' => null,

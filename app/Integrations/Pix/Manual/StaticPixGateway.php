@@ -19,7 +19,7 @@ use Illuminate\Http\Request;
  * Pix MANUAL — sem gateway/provedor.
  *
  * Gera um "BR Code" estático (copia-e-cola + QR) localmente, usando a chave Pix
- * fixa da pelada configurada no painel (Configuração de valores). O atleta paga
+ * fixa da organização configurada no painel (Configuração de valores). O atleta paga
  * no app do banco e o TESOUREIRO confirma o pagamento manualmente no admin —
  * não há webhook nem confirmação automática.
  */

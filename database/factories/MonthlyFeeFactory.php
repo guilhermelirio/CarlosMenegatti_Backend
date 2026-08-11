@@ -6,7 +6,9 @@ namespace Database\Factories;
 
 use App\Enums\FeeStatus;
 use App\Models\MonthlyFee;
+use App\Models\Organization;
 use App\Models\Player;
+use App\Tenancy\CurrentOrganization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,6 +24,7 @@ class MonthlyFeeFactory extends Factory
         $month = fake()->numberBetween(1, 12);
 
         return [
+            'organization_id' => app(CurrentOrganization::class)->id() ?? Organization::factory(),
             'player_id' => Player::factory()->monthly(),
             'reference_year' => $year,
             'reference_month' => $month,

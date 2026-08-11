@@ -22,6 +22,7 @@ class PaymentFactory extends Factory
         $fee = MonthlyFee::factory()->create();
 
         return [
+            'organization_id' => $fee->organization_id,
             'player_id' => $fee->player_id,
             'payable_type' => $fee->getMorphClass(),
             'payable_id' => $fee->id,

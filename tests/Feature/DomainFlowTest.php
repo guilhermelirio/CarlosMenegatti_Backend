@@ -28,6 +28,7 @@ class DomainFlowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->setCurrentOrganization();
         Setting::set(Setting::DEFAULT_MONTHLY_FEE_CENTS, '5000');
         Setting::set(Setting::DEFAULT_DAILY_FEE_CENTS, '2000');
         Setting::set(Setting::MONTHLY_FEE_DUE_DAY, '10');

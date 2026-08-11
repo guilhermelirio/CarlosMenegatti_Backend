@@ -15,7 +15,7 @@ abstract class ApiController extends Controller
     protected function currentPlayer(Request $request): Player
     {
         $user = $request->user();
-        $player = $user?->player;
+        $player = $user?->players()->first();
 
         if ($player === null) {
             throw new HttpException(403, 'Usuário autenticado não está vinculado a um atleta.');

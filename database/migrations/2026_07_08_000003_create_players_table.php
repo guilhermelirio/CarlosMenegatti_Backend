@@ -12,6 +12,7 @@ return new class extends Migration
     {
         Schema::create('players', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->foreignUlid('organization_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
             $table->string('nickname')->nullable();
@@ -29,6 +30,7 @@ return new class extends Migration
             $table->softDeletesTz();
 
             $table->index(['status', 'membership_type']);
+            $table->unique(['organization_id', 'user_id']);
         });
     }
 

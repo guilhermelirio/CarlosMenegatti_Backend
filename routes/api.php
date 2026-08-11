@@ -16,7 +16,7 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('throttle:login');
 
     // --- Authenticated athlete (Sanctum) ---
-    Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
+    Route::middleware(['auth:sanctum', 'organization', 'throttle:api'])->group(function (): void {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('me', [AuthController::class, 'me']);
 

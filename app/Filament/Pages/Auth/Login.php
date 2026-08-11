@@ -18,7 +18,7 @@ class Login extends BaseLogin
 
         if (app()->environment('local')) {
             $this->form->fill([
-                'email' => 'admin@pelada.test',
+                'email' => 'admin@grupo.test',
                 'password' => 'password',
                 'remember' => true,
             ]);

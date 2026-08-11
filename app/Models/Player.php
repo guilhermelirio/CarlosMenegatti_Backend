@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\MembershipType;
 use App\Enums\PlayerPosition;
 use App\Enums\PlayerStatus;
+use App\Models\Concerns\BelongsToOrganization;
 use Database\Factories\PlayerFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,7 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Player extends Model
 {
     /** @use HasFactory<PlayerFactory> */
-    use HasFactory, HasUlids, SoftDeletes;
+    use BelongsToOrganization, HasFactory, HasUlids, SoftDeletes;
 
     protected $fillable = [
         'user_id',

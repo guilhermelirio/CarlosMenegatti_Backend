@@ -11,6 +11,7 @@ use App\Filament\Widgets\TopDebtors;
 use BackedEnum;
 use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
@@ -74,6 +75,7 @@ class FinancialReports extends BaseDashboard
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('gray')
                 ->url(fn (): string => route('reports.pdf', [
+                    'organization' => Filament::getTenant(),
                     'from' => $this->pageFilters['from'] ?? CarbonImmutable::now()->startOfMonth()->toDateString(),
                     'to' => $this->pageFilters['to'] ?? CarbonImmutable::now()->endOfMonth()->toDateString(),
                 ]))

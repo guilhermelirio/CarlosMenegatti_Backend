@@ -21,6 +21,7 @@ class PixManualTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->setCurrentOrganization();
         Setting::set(Setting::DEFAULT_MONTHLY_FEE_CENTS, '5000');
         Setting::set(Setting::PIX_KEY, 'pelada@exemplo.com');
         Setting::set(Setting::PIX_RECEIVER_NAME, 'PELADA C MENEGATTI');

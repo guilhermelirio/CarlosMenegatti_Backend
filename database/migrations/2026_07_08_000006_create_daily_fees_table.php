@@ -12,6 +12,7 @@ return new class extends Migration
     {
         Schema::create('daily_fees', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->foreignUlid('organization_id')->constrained()->cascadeOnDelete();
             $table->foreignUlid('player_id')->constrained()->cascadeOnDelete();
             $table->foreignUlid('game_session_id')->constrained()->cascadeOnDelete();
             $table->bigInteger('amount_cents');
@@ -20,7 +21,7 @@ return new class extends Migration
             $table->timestampsTz();
 
             $table->unique(['player_id', 'game_session_id']);
-            $table->index('status');
+            $table->index(['organization_id', 'status']);
         });
     }
 

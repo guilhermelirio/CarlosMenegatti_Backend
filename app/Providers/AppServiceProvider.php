@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Enums\OrganizationRole;
+use App\Models\User;
+use App\Tenancy\CurrentOrganization;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -13,11 +17,16 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->app->singleton(CurrentOrganization::class);
     }
 
     public function boot(): void
     {
+        Gate::define('viewPulse', fn (?User $user = null): bool => $user !== null
+            && $user->organizations()
+                ->wherePivot('role', OrganizationRole::Admin->value)
+                ->exists());
+
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(60)->by(
             $request->user()?->getAuthIdentifier() ?: $request->ip()
         ));

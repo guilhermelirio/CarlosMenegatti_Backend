@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Models\GameSession;
+use App\Models\Organization;
 use App\Models\Setting;
+use App\Tenancy\CurrentOrganization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,6 +20,7 @@ class GameSessionFactory extends Factory
     public function definition(): array
     {
         return [
+            'organization_id' => app(CurrentOrganization::class)->id() ?? Organization::factory(),
             'scheduled_date' => fake()->dateTimeBetween('-1 month', '+1 month')->format('Y-m-d'),
             'start_time' => fake()->randomElement(['19:00', '19:30', '20:00', '20:30']),
             'location' => fake()->randomElement(['Quadra do Zé', 'Society Bola na Rede', 'Campo do Bairro']),
