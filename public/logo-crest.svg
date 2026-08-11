@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" font-family="Arial Black, Arial, sans-serif">
+  <defs>
+    <linearGradient id="ring" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fdba74"/>
+      <stop offset="45%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#c2410c"/>
+    </linearGradient>
+    <linearGradient id="eagle" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fb923c"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="#f97316" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity=".55"/>
+    </radialGradient>
+    <path id="arcTop" d="M 66 256 A 190 190 0 0 1 446 256"/>
+    <path id="arcBot" d="M 76 256 A 180 180 0 0 0 436 256"/>
+  </defs>
+
+  <!-- brasa / glow -->
+  <circle cx="256" cy="256" r="250" fill="url(#glow)"/>
+  <!-- anéis -->
+  <circle cx="256" cy="256" r="246" fill="#0a0a0a" stroke="url(#ring)" stroke-width="8"/>
+  <circle cx="256" cy="256" r="232" fill="none" stroke="url(#ring)" stroke-width="3" opacity=".7"/>
+  <circle cx="256" cy="256" r="168" fill="none" stroke="url(#ring)" stroke-width="3" opacity=".6"/>
+
+  <!-- textos em arco -->
+  <text fill="url(#ring)" font-size="42" font-weight="900" letter-spacing="6">
+    <textPath href="#arcTop" startOffset="50%" text-anchor="middle">CARLOS MENEGATTI</textPath>
+  </text>
+  <text fill="url(#ring)" font-size="40" font-weight="900" letter-spacing="7">
+    <textPath href="#arcBot" startOffset="50%" text-anchor="middle">FOOTBALL CLUB</textPath>
+  </text>
+
+  <!-- bolas laterais -->
+  <g>
+    <circle cx="96" cy="256" r="16" fill="#fff" stroke="#0a0a0a" stroke-width="1.5"/>
+    <path d="M96 246l7 5-3 8h-8l-3-8 7-5z" fill="#0a0a0a"/>
+    <circle cx="416" cy="256" r="16" fill="#fff" stroke="#0a0a0a" stroke-width="1.5"/>
+    <path d="M416 246l7 5-3 8h-8l-3-8 7-5z" fill="#0a0a0a"/>
+  </g>
+
+  <!-- escudo -->
+  <path d="M256 150 L346 178 V300 C346 352 306 388 256 406 C206 388 166 352 166 300 V178 Z"
+        fill="#111111" stroke="url(#ring)" stroke-width="6"/>
+
+  <!-- águia estilizada (asas abertas + cabeça) -->
+  <g fill="url(#eagle)">
+    <!-- corpo/cauda -->
+    <path d="M256 300 l16 22 -16 46 -16 -46 z"/>
+    <!-- cabeça e pescoço -->
+    <path d="M256 196 c-9 0 -16 7 -16 16 c0 7 4 12 10 15 l-8 6 14 4 v18 h12 v-18 l14 -4 -8 -6 c6 -3 10 -8 10 -15 c0 -9 -7 -16 -16 -16 z M247 210 l-9 -5 6 8 z"/>
+    <!-- asa esquerda -->
+    <path d="M252 236 C214 224 184 226 156 236 C182 240 190 246 196 254 C176 250 164 252 150 262 C176 266 186 272 196 282 C182 282 172 286 162 296 C190 298 214 304 240 320 C246 300 250 268 252 236 Z"/>
+    <!-- asa direita (espelho) -->
+    <path d="M260 236 C298 224 328 226 356 236 C330 240 322 246 316 254 C336 250 348 252 362 262 C336 266 326 272 316 282 C330 282 340 286 350 296 C322 298 298 304 272 320 C266 300 262 268 260 236 Z"/>
+  </g>
+</svg>
