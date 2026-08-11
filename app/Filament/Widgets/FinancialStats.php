@@ -29,7 +29,7 @@ class FinancialStats extends StatsOverviewWidget
         $to = $this->filterDate('to', CarbonImmutable::now()->endOfMonth());
 
         $period = $reports->cashFlowByPeriod($from, $to);
-        $series = $reports->cashFlowSeries(6);
+        $series = $reports->cashFlowSeriesForPeriod($from, $to);
         $incomeSpark = array_map(fn ($r) => round($r['income_cents'] / 100), $series);
         $expenseSpark = array_map(fn ($r) => round($r['expense_cents'] / 100), $series);
         $balanceSpark = array_map(fn ($r) => round($r['balance_cents'] / 100), $series);
@@ -63,7 +63,7 @@ class FinancialStats extends StatsOverviewWidget
                 ->color($period['balance_cents'] >= 0 ? 'success' : 'danger'),
 
             Stat::make('Inadimplência', Money::formatBRL($owed))
-                ->description('Total em aberto (mensalidades + diárias)')
+                ->description('Total vencido (mensalidades + diárias)')
                 ->descriptionIcon('heroicon-m-exclamation-triangle')
                 ->color($owed > 0 ? 'warning' : 'success'),
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Players;
 
+use App\Filament\Concerns\AuthorizesOrganizationOperations;
 use App\Filament\Resources\Players\Pages\CreatePlayer;
 use App\Filament\Resources\Players\Pages\EditPlayer;
 use App\Filament\Resources\Players\Pages\ListPlayers;
@@ -18,6 +19,13 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PlayerResource extends Resource
 {
+    use AuthorizesOrganizationOperations;
+
+    protected static function treasurerCanWrite(): bool
+    {
+        return true;
+    }
+
     protected static ?string $model = Player::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;

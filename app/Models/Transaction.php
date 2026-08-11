@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property TransactionType $type
@@ -18,16 +20,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Transaction extends Model
 {
     /** @use HasFactory<TransactionFactory> */
-    use BelongsToOrganization, HasFactory, HasUlids;
+    use BelongsToOrganization, HasFactory, HasUlids, SoftDeletes;
 
     protected $fillable = [
         'type',
         'category_id',
         'player_id',
         'payment_id',
+        'reversal_of_id',
         'amount_cents',
         'occurred_on',
         'description',
+        'receipt_path',
     ];
 
     protected $casts = [
@@ -52,5 +56,17 @@ class Transaction extends Model
     public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class);
+    }
+
+    /** @return BelongsTo<Transaction, $this> */
+    public function reversedTransaction(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'reversal_of_id');
+    }
+
+    /** @return HasMany<Transaction, $this> */
+    public function reversals(): HasMany
+    {
+        return $this->hasMany(self::class, 'reversal_of_id');
     }
 }

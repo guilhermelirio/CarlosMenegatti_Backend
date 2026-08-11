@@ -38,6 +38,11 @@ class PlayersTable
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge(),
+                TextColumn::make('is_permanently_exempt')
+                    ->label('Gratuidade')
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'Permanente' : '—')
+                    ->badge()
+                    ->color(fn (bool $state): string => $state ? 'success' : 'gray'),
                 TextColumn::make('joined_at')
                     ->label('Entrada')
                     ->date('d/m/Y')

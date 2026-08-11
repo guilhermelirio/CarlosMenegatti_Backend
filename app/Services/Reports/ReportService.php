@@ -16,14 +16,14 @@ use Carbon\CarbonInterface;
 final class ReportService
 {
     /**
-     * Inadimplência detalhada: por atleta, nº de cobranças em aberto (mensalidades
-     * + diárias), meses em atraso (da mensalidade aberta mais antiga) e total devido.
+     * Inadimplência detalhada: por atleta, nº de cobranças vencidas (mensalidades
+     * + diárias), meses em atraso (da mensalidade vencida mais antiga) e total devido.
      *
      * @return list<array<string, int|string>>
      */
     public function delinquencyDetailed(): array
     {
-        $open = [FeeStatus::Pending, FeeStatus::Overdue];
+        $open = [FeeStatus::Overdue];
         $now = CarbonImmutable::now();
 
         return Player::query()
@@ -61,19 +61,44 @@ final class ReportService
      */
     public function cashFlowSeries(int $months = 12): array
     {
-        $series = [];
-        $cursor = CarbonImmutable::now()->startOfMonth()->subMonths($months - 1);
+        $to = CarbonImmutable::now()->endOfMonth();
+        $from = $to->startOfMonth()->subMonths(max(1, $months) - 1);
 
-        for ($i = 0; $i < $months; $i++) {
-            $month = $cursor->addMonths($i);
-            $data = $this->cashFlowByPeriod($month->startOfMonth(), $month->endOfMonth());
+        return $this->cashFlowSeriesForPeriod($from, $to);
+    }
+
+    /**
+     * Série mensal limitada ao período selecionado. O primeiro e o último mês
+     * consideram apenas os dias efetivamente incluídos no intervalo.
+     *
+     * @return list<array{label: string, income_cents: int, expense_cents: int, balance_cents: int}>
+     */
+    public function cashFlowSeriesForPeriod(CarbonInterface $from, CarbonInterface $to): array
+    {
+        $fromDate = CarbonImmutable::parse($from->toDateString())->startOfDay();
+        $toDate = CarbonImmutable::parse($to->toDateString())->endOfDay();
+
+        if ($fromDate->isAfter($toDate)) {
+            [$fromDate, $toDate] = [$toDate->startOfDay(), $fromDate->endOfDay()];
+        }
+
+        $series = [];
+        $cursor = $fromDate->startOfMonth();
+        $lastMonth = $toDate->startOfMonth();
+
+        while ($cursor->lessThanOrEqualTo($lastMonth)) {
+            $periodStart = $cursor->isBefore($fromDate) ? $fromDate : $cursor->startOfMonth();
+            $periodEnd = $cursor->endOfMonth()->isAfter($toDate) ? $toDate : $cursor->endOfMonth();
+            $data = $this->cashFlowByPeriod($periodStart, $periodEnd);
 
             $series[] = [
-                'label' => $month->format('m/Y'),
+                'label' => $cursor->format('m/Y'),
                 'income_cents' => $data['income_cents'],
                 'expense_cents' => $data['expense_cents'],
                 'balance_cents' => $data['balance_cents'],
             ];
+
+            $cursor = $cursor->addMonth();
         }
 
         return $series;
@@ -81,7 +106,7 @@ final class ReportService
 
     public function totalOwedCents(): int
     {
-        $open = [FeeStatus::Pending, FeeStatus::Overdue];
+        $open = [FeeStatus::Overdue];
 
         $monthly = (int) MonthlyFee::query()->whereIn('status', $open)->sum('amount_cents');
         $daily = (int) DailyFee::query()->whereIn('status', $open)->sum('amount_cents');

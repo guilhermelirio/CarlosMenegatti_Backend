@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\GameSessions;
 
+use App\Filament\Concerns\AuthorizesOrganizationOperations;
 use App\Filament\Resources\GameSessions\Pages\CreateGameSession;
 use App\Filament\Resources\GameSessions\Pages\EditGameSession;
 use App\Filament\Resources\GameSessions\Pages\ListGameSessions;
@@ -17,6 +20,13 @@ use Filament\Tables\Table;
 
 class GameSessionResource extends Resource
 {
+    use AuthorizesOrganizationOperations;
+
+    protected static function treasurerCanWrite(): bool
+    {
+        return true;
+    }
+
     protected static ?string $model = GameSession::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTrophy;

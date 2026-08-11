@@ -43,10 +43,12 @@ class FinancialReports extends BaseDashboard
                 ->schema([
                     DatePicker::make('from')
                         ->label('De')
-                        ->default(CarbonImmutable::now()->startOfMonth()),
+                        ->default(CarbonImmutable::now()->startOfMonth())
+                        ->beforeOrEqual('to'),
                     DatePicker::make('to')
                         ->label('Até')
-                        ->default(CarbonImmutable::now()->endOfMonth()),
+                        ->default(CarbonImmutable::now()->endOfMonth())
+                        ->afterOrEqual('from'),
                 ])
                 ->columns(2),
         ]);
@@ -80,6 +82,15 @@ class FinancialReports extends BaseDashboard
                     'to' => $this->pageFilters['to'] ?? CarbonImmutable::now()->endOfMonth()->toDateString(),
                 ]))
                 ->openUrlInNewTab(),
+            Action::make('csv')
+                ->label('Exportar CSV (Excel)')
+                ->icon('heroicon-o-table-cells')
+                ->color('gray')
+                ->url(fn (): string => route('reports.csv', [
+                    'organization' => Filament::getTenant(),
+                    'from' => $this->pageFilters['from'] ?? CarbonImmutable::now()->startOfMonth()->toDateString(),
+                    'to' => $this->pageFilters['to'] ?? CarbonImmutable::now()->endOfMonth()->toDateString(),
+                ])),
         ];
     }
 }

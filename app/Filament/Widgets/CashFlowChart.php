@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Filament\Widgets;
 
 use App\Services\Reports\ReportService;
+use Carbon\CarbonImmutable;
 use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
 class CashFlowChart extends ChartWidget
 {
-    protected ?string $heading = 'Fluxo de caixa (últimos 12 meses)';
+    use InteractsWithPageFilters;
+
+    protected ?string $heading = 'Fluxo de caixa (período selecionado)';
 
     protected static bool $isLazy = false;
 
@@ -17,7 +21,9 @@ class CashFlowChart extends ChartWidget
 
     protected function getData(): array
     {
-        $series = app(ReportService::class)->cashFlowSeries(12);
+        $from = $this->filterDate('from', CarbonImmutable::now()->startOfMonth());
+        $to = $this->filterDate('to', CarbonImmutable::now()->endOfMonth());
+        $series = app(ReportService::class)->cashFlowSeriesForPeriod($from, $to);
 
         return [
             'datasets' => [
@@ -56,5 +62,12 @@ class CashFlowChart extends ChartWidget
     protected function getOptions(): array
     {
         return ['animation' => false];
+    }
+
+    private function filterDate(string $key, CarbonImmutable $default): CarbonImmutable
+    {
+        $value = $this->pageFilters[$key] ?? null;
+
+        return $value ? CarbonImmutable::parse($value) : $default;
     }
 }

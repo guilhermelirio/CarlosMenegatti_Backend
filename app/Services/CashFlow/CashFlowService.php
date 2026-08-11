@@ -10,6 +10,8 @@ use App\Models\Payment;
 use App\Models\Transaction;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 final class CashFlowService
 {
@@ -55,6 +57,25 @@ final class CashFlowService
         $expense = (int) Transaction::query()->where('type', TransactionType::Expense)->sum('amount_cents');
 
         return $income - $expense;
+    }
+
+    public function reverse(Transaction $transaction, string $reason): Transaction
+    {
+        if ($transaction->reversals()->exists()) {
+            throw ValidationException::withMessages(['transaction' => ['Este lançamento já possui estorno.']]);
+        }
+
+        return DB::transaction(fn (): Transaction => Transaction::query()->create([
+            'type' => $transaction->type === TransactionType::Income
+                ? TransactionType::Expense
+                : TransactionType::Income,
+            'category_id' => $transaction->category_id,
+            'player_id' => $transaction->player_id,
+            'reversal_of_id' => $transaction->id,
+            'amount_cents' => $transaction->amount_cents,
+            'occurred_on' => CarbonImmutable::now()->toDateString(),
+            'description' => "Estorno: {$reason} — {$transaction->description}",
+        ]));
     }
 
     private function resolveCategory(string $name, TransactionType $type): Category

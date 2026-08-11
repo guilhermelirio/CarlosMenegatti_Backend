@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Payments;
 
+use App\Filament\Concerns\AuthorizesOrganizationOperations;
 use App\Filament\Resources\Payments\Pages\CreatePayment;
 use App\Filament\Resources\Payments\Pages\EditPayment;
 use App\Filament\Resources\Payments\Pages\ListPayments;
@@ -16,6 +19,18 @@ use Filament\Tables\Table;
 
 class PaymentResource extends Resource
 {
+    use AuthorizesOrganizationOperations;
+
+    protected static function treasurerCanWrite(): bool
+    {
+        return true;
+    }
+
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
     protected static ?string $model = Payment::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;

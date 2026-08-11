@@ -9,9 +9,8 @@ use App\Enums\PaymentStatus;
 use App\Models\Payment;
 use App\Services\Billing\PaymentService;
 use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Notifications\Notification;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -50,6 +49,9 @@ class PaymentsTable
                     ->dateTime('d/m/Y H:i')
                     ->placeholder('—')
                     ->sortable(),
+                IconColumn::make('receipt_path')
+                    ->label('Comprovante')
+                    ->boolean(fn (?string $state): bool => filled($state)),
             ])
             ->filters([
                 SelectFilter::make('status')->label('Status')->options(PaymentStatus::class),
@@ -67,11 +69,6 @@ class PaymentsTable
 
                         Notification::make()->title('Pagamento confirmado e baixa efetuada.')->success()->send();
                     }),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
             ])
             ->defaultSort('created_at', 'desc');
     }

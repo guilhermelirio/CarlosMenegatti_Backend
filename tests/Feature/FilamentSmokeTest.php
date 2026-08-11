@@ -47,6 +47,8 @@ class FilamentSmokeTest extends TestCase
             "/admin/{$this->organization->slug}/profile",
             "/admin/{$this->organization->slug}/manage-values",
             "/admin/{$this->organization->slug}/financial-reports",
+            "/admin/{$this->organization->slug}/monthly-closings",
+            "/admin/{$this->organization->slug}/audit-logs",
         ];
 
         $staff = $this->staff();

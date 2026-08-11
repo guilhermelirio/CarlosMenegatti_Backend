@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\DailyFees;
 
+use App\Filament\Concerns\AuthorizesOrganizationOperations;
 use App\Filament\Resources\DailyFees\Pages\CreateDailyFee;
 use App\Filament\Resources\DailyFees\Pages\EditDailyFee;
 use App\Filament\Resources\DailyFees\Pages\ListDailyFees;
@@ -16,6 +19,13 @@ use Filament\Tables\Table;
 
 class DailyFeeResource extends Resource
 {
+    use AuthorizesOrganizationOperations;
+
+    protected static function treasurerCanWrite(): bool
+    {
+        return true;
+    }
+
     protected static ?string $model = DailyFee::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTicket;

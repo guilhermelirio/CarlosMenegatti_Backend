@@ -10,6 +10,15 @@ API e painel administrativo para múltiplas organizações, construídos com Lar
 - O Filament usa tenancy nativa em `/admin/{organization-slug}`.
 - Administradores podem criar organizações em `/admin/new`, editar o perfil do tenant e gerenciar usuários e papéis pelo próprio painel.
 - Cada organização mantém pelo menos um administrador; remover um vínculo nunca apaga a conta global do usuário.
+- O caixa permite filtrar por período, tipo, categoria e atleta; lançamentos podem ser editados, estornados ou excluídos de forma recuperável e auditada.
+- Cobranças podem ser filtradas por período, tipo, vínculo, situação e atleta; os relatórios e o PDF respeitam o período selecionado.
+- Mensalidades aceitam descontos fixos e percentuais, por jogador ou por cobrança, além de isenção mensal e gratuidade permanente.
+- Convidados ficam registrados sem login no aplicativo e geram receita por partida na categoria própria.
+- Multa e juros mensais são configuráveis por organização e começam em 0%.
+- O fechamento mensal fotografa caixa e inadimplência; meses fechados ficam bloqueados e somente administradores podem reabri-los.
+- Edições, estornos, exclusões recuperáveis e restaurações do caixa geram histórico de auditoria com responsável e valores anteriores/novos.
+- Comprovantes são opcionais e podem ser anexados aos pagamentos pelo aplicativo ou aos lançamentos pelo painel.
+- O painel possui perfis de administrador, tesoureiro e somente consulta; relatórios podem ser exportados em PDF e CSV compatível com Excel.
 - Horizon processa filas Redis; o scheduler roda separadamente; Pulse fica disponível para administradores.
 - Reverb não faz parte da stack enquanto não existir um caso real de atualização em tempo real.
 

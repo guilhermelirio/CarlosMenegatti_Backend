@@ -41,6 +41,8 @@ class Payment extends Model
         'pix_provider',
         'pix_expires_at',
         'metadata',
+        'receipt_path',
+        'receipt_uploaded_at',
     ];
 
     protected $casts = [
@@ -50,6 +52,7 @@ class Payment extends Model
         'paid_at' => 'datetime',
         'pix_expires_at' => 'datetime',
         'metadata' => 'array',
+        'receipt_uploaded_at' => 'datetime',
     ];
 
     /** @return MorphTo<Model, $this> */

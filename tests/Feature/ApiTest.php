@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Enums\FeeStatus;
 use App\Enums\OrganizationRole;
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\MonthlyFee;
 use App\Models\Organization;
@@ -13,8 +14,11 @@ use App\Models\Payment;
 use App\Models\Player;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\Billing\PaymentService;
 use App\Tenancy\CurrentOrganization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -161,5 +165,24 @@ class ApiTest extends TestCase
         $this->withHeader('X-Organization-Id', $this->organization->id)
             ->postJson("/api/v1/monthly-fees/{$otherFee->id}/pix")
             ->assertNotFound();
+    }
+
+    public function test_player_can_optionally_upload_and_download_a_payment_receipt(): void
+    {
+        Storage::fake('local');
+        $user = $this->playerUser();
+        Sanctum::actingAs($user);
+        $fee = MonthlyFee::factory()->for($user->player)->create(['status' => FeeStatus::Pending]);
+        $payment = app(PaymentService::class)
+            ->registerManualPayment($fee, PaymentMethod::Pix);
+
+        $this->post("/api/v1/payments/{$payment->id}/receipt", [
+            'receipt' => UploadedFile::fake()->image('comprovante.jpg'),
+        ])->assertOk()->assertJsonPath('has_receipt', true);
+
+        $payment->refresh();
+        $this->assertNotNull($payment->receipt_path);
+        Storage::disk('local')->assertExists($payment->receipt_path);
+        $this->get("/api/v1/payments/{$payment->id}/receipt")->assertOk();
     }
 }

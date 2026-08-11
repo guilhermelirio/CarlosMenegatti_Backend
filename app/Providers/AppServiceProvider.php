@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Enums\OrganizationRole;
+use App\Models\Transaction;
 use App\Models\User;
+use App\Observers\TransactionObserver;
 use App\Tenancy\CurrentOrganization;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -22,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Transaction::observe(TransactionObserver::class);
+
         Gate::define('viewPulse', fn (?User $user = null): bool => $user !== null
             && $user->organizations()
                 ->wherePivot('role', OrganizationRole::Admin->value)

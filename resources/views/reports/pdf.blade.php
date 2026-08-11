@@ -39,7 +39,7 @@
             </tr>
         </table>
 
-        <h2>Fluxo de caixa — últimos 6 meses</h2>
+        <h2>Fluxo de caixa — período selecionado</h2>
         <table class="data">
             <thead>
                 <tr><th>Mês</th><th class="right">Receitas</th><th class="right">Despesas</th><th class="right">Saldo</th></tr>

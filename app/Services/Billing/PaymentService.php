@@ -149,6 +149,10 @@ final readonly class PaymentService
 
     private function categoryName(?Model $payable): string
     {
+        if ($payable instanceof DailyFee && $payable->player?->isGuest()) {
+            return 'Convidado';
+        }
+
         return $payable instanceof MonthlyFee ? 'Mensalidade' : 'Diária';
     }
 

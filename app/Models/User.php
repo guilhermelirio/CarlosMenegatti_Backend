@@ -82,7 +82,10 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     public function getTenants(Panel $panel): Collection
     {
         return $this->organizations()
-            ->wherePivot('role', OrganizationRole::Admin->value)
+            ->wherePivotIn('role', array_map(
+                fn (OrganizationRole $role): string => $role->value,
+                array_filter(OrganizationRole::cases(), fn (OrganizationRole $role): bool => $role->canAccessPanel()),
+            ))
             ->get();
     }
 
@@ -91,14 +94,28 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         return $tenant instanceof Organization
             && $this->organizations()
                 ->whereKey($tenant->getKey())
-                ->wherePivot('role', OrganizationRole::Admin->value)
+                ->wherePivotIn('role', array_map(
+                    fn (OrganizationRole $role): string => $role->value,
+                    array_filter(OrganizationRole::cases(), fn (OrganizationRole $role): bool => $role->canAccessPanel()),
+                ))
                 ->exists();
     }
 
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->organizations()
-            ->wherePivot('role', OrganizationRole::Admin->value)
+            ->wherePivotIn('role', array_map(
+                fn (OrganizationRole $role): string => $role->value,
+                array_filter(OrganizationRole::cases(), fn (OrganizationRole $role): bool => $role->canAccessPanel()),
+            ))
             ->exists();
+    }
+
+    public function roleForOrganization(Organization|string $organization): ?OrganizationRole
+    {
+        $organizationId = $organization instanceof Organization ? $organization->getKey() : $organization;
+        $membership = $this->organizations()->whereKey($organizationId)->first()?->pivot;
+
+        return $membership instanceof OrganizationMembership ? $membership->role : null;
     }
 }

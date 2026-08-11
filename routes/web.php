@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ReportCsvController;
 use App\Http\Controllers\Admin\ReportPdfController;
 use Illuminate\Support\Facades\Route;
 
@@ -9,3 +10,7 @@ Route::redirect('/', '/admin');
 Route::get('admin/{organization:slug}/reports/pdf', ReportPdfController::class)
     ->middleware('auth')
     ->name('reports.pdf');
+
+Route::get('admin/{organization:slug}/reports/csv', ReportCsvController::class)
+    ->middleware('auth')
+    ->name('reports.csv');

@@ -1,7 +1,7 @@
 <x-filament-widgets::widget>
     <x-filament::section>
         <x-slot name="heading">Maiores devedores</x-slot>
-        <x-slot name="description">{{ $count }} atleta(s) com cobranças em aberto</x-slot>
+        <x-slot name="description">{{ $count }} atleta(s) com cobranças vencidas</x-slot>
 
         <div style="overflow-x:auto;">
             <table style="width:100%;font-size:.85rem;border-collapse:collapse;">

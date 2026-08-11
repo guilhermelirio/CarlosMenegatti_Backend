@@ -35,6 +35,9 @@ class PlayerFactory extends Factory
             'photo_path' => null,
             'monthly_fee_cents' => null,
             'daily_fee_cents' => null,
+            'is_permanently_exempt' => false,
+            'monthly_discount_cents' => 0,
+            'monthly_discount_percent' => 0,
             'notes' => fake()->optional(0.2)->sentence(),
         ];
     }
@@ -47,6 +50,14 @@ class PlayerFactory extends Factory
     public function daily(): static
     {
         return $this->state(fn () => ['membership_type' => MembershipType::Daily]);
+    }
+
+    public function guest(): static
+    {
+        return $this->state(fn () => [
+            'membership_type' => MembershipType::Guest,
+            'user_id' => null,
+        ]);
     }
 
     public function inactive(): static

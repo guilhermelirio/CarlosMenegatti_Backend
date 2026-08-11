@@ -21,12 +21,14 @@ enum MembershipType: string implements HasColor, HasLabel
 
     case Monthly = 'monthly';
     case Daily = 'daily';
+    case Guest = 'guest';
 
     public function label(): string
     {
         return match ($this) {
             self::Monthly => 'Mensalista',
             self::Daily => 'Diarista',
+            self::Guest => 'Convidado',
         };
     }
 
@@ -35,6 +37,7 @@ enum MembershipType: string implements HasColor, HasLabel
         return match ($this) {
             self::Monthly => 'info',
             self::Daily => 'gray',
+            self::Guest => 'warning',
         };
     }
 }

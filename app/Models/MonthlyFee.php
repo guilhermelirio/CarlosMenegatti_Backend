@@ -26,6 +26,11 @@ class MonthlyFee extends Model
         'reference_year',
         'reference_month',
         'amount_cents',
+        'gross_amount_cents',
+        'discount_cents',
+        'discount_percent',
+        'late_fee_cents',
+        'interest_cents',
         'due_date',
         'status',
         'paid_at',
@@ -35,6 +40,11 @@ class MonthlyFee extends Model
         'reference_year' => 'integer',
         'reference_month' => 'integer',
         'amount_cents' => 'integer',
+        'gross_amount_cents' => 'integer',
+        'discount_cents' => 'integer',
+        'discount_percent' => 'integer',
+        'late_fee_cents' => 'integer',
+        'interest_cents' => 'integer',
         'due_date' => 'date',
         'status' => FeeStatus::class,
         'paid_at' => 'datetime',
@@ -55,5 +65,12 @@ class MonthlyFee extends Model
     public function referenceLabel(): string
     {
         return sprintf('%02d/%04d', $this->reference_month, $this->reference_year);
+    }
+
+    public function principalAmountCents(): int
+    {
+        $gross = $this->gross_amount_cents ?? $this->amount_cents;
+
+        return max(0, $gross - $this->discount_cents);
     }
 }

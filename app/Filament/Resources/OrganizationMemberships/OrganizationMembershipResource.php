@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\OrganizationMemberships;
 
+use App\Filament\Concerns\AuthorizesOrganizationOperations;
 use App\Filament\Resources\OrganizationMemberships\Pages\CreateOrganizationMembership;
 use App\Filament\Resources\OrganizationMemberships\Pages\EditOrganizationMembership;
 use App\Filament\Resources\OrganizationMemberships\Pages\ListOrganizationMemberships;
@@ -18,6 +19,8 @@ use Filament\Tables\Table;
 
 class OrganizationMembershipResource extends Resource
 {
+    use AuthorizesOrganizationOperations;
+
     protected static ?string $model = OrganizationMembership::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;

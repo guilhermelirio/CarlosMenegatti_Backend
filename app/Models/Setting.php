@@ -22,6 +22,10 @@ class Setting extends Model
 
     public const MONTHLY_FEE_DUE_DAY = 'monthly_fee_due_day';
 
+    public const LATE_FEE_PERCENT = 'late_fee_percent';
+
+    public const MONTHLY_INTEREST_PERCENT = 'monthly_interest_percent';
+
     public const PIX_KEY = 'pix_key';
 
     public const PIX_KEY_TYPE = 'pix_key_type';

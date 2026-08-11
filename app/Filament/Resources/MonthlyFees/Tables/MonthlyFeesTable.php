@@ -50,6 +50,17 @@ class MonthlyFeesTable
             ])
             ->filters([
                 SelectFilter::make('status')->label('Status')->options(FeeStatus::class),
+                SelectFilter::make('player')
+                    ->label('Atleta')
+                    ->relationship('player', 'name')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('reference_month')
+                    ->label('Mês')
+                    ->options(array_combine(range(1, 12), array_map('strval', range(1, 12)))),
+                SelectFilter::make('reference_year')
+                    ->label('Ano')
+                    ->options(array_combine(range(2024, 2035), array_map('strval', range(2024, 2035)))),
             ])
             ->recordActions([
                 self::receivePaymentAction(),

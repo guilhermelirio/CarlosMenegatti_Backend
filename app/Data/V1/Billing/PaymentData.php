@@ -22,6 +22,7 @@ class PaymentData extends Data
         public PaymentMethod $method,
         public PaymentStatus $status,
         public ?string $paid_at,
+        public bool $has_receipt,
         public ?PixChargeData $pix,
     ) {}
 
@@ -37,6 +38,7 @@ class PaymentData extends Data
             method: $payment->method,
             status: $payment->status,
             paid_at: $payment->paid_at?->toIso8601String(),
+            has_receipt: $payment->receipt_path !== null,
             pix: $payment->method === PaymentMethod::Pix && $payment->pix_qrcode !== null
                 ? PixChargeData::fromModel($payment)
                 : null,

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests;
 
 use App\Models\Organization;
@@ -22,7 +24,7 @@ abstract class TestCase extends BaseTestCase
     /**
      * Trava de segurança: nunca deixe a suíte (RefreshDatabase) rodar contra um
      * banco que não seja o de testes. Sem isto, rodar os testes com a config
-     * cacheada (que ignora o DB_DATABASE=testing do phpunit.xml) faria o
+     * cacheada (que ignora o SQLite em memória do phpunit.xml) faria o
      * `migrate:fresh` apagar o banco de desenvolvimento.
      *
      * Roda em refreshApplication() (antes dos traits/RefreshDatabase), então
@@ -32,11 +34,14 @@ abstract class TestCase extends BaseTestCase
     {
         parent::refreshApplication();
 
-        $database = (string) config('database.connections.'.config('database.default').'.database');
+        $connection = (string) config('database.default');
+        $database = (string) config("database.connections.{$connection}.database");
+        $isIsolatedDatabase = ($connection === 'sqlite' && $database === ':memory:')
+            || str_contains($database, 'testing');
 
-        if (! str_contains($database, 'testing')) {
+        if (! app()->environment('testing') || ! $isIsolatedDatabase) {
             throw new RuntimeException(
-                "Testes abortados: conectados ao banco [{$database}], que não é de testes. ".
+                "Testes abortados: conexão [{$connection}] com banco [{$database}] não é isolada. ".
                 'Rode `php artisan config:clear` antes de `php artisan test` '.
                 '(a config cacheada sobrepõe o DB de testes do phpunit.xml).'
             );

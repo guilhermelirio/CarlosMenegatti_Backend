@@ -34,7 +34,23 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   inadimplência, atletas ativos, próximas sessões).
 - **Relatórios** (`ReportService`): inadimplência, caixa por período, receita por origem, presença por atleta.
 - **Relatórios isolados por tenant**: exportação PDF exige administrador da organização e usa sua identidade no documento.
-- **Testes** (PHPUnit): fluxo de domínio, API, isolamento multi-tenant e smoke dos painéis Filament (24 testes).
+- **Filtros financeiros**: caixa por período, tipo, categoria e atleta; cobranças por período, tipo,
+  vínculo, status e atleta; mensalidades por competência, status e atleta.
+- **Relatórios por período**: indicadores, gráficos e PDF usam o mesmo intervalo selecionado, inclusive
+  nos meses inicial e final.
+- **Preservação do caixa**: exclusões de lançamentos são recuperáveis, e remoções definitivas permanecem bloqueadas.
+- **Regras de cobrança**: descontos fixos e percentuais permanentes ou por mensalidade, isenção mensal,
+  gratuidade permanente e multa/juros configuráveis por organização com padrão de 0%.
+- **Convidados**: cadastro sem login, histórico de participação e receita individual por partida na categoria `Convidado`.
+- **Fechamento mensal**: fotografia de caixa e inadimplência, bloqueio de alterações no período fechado e
+  reabertura exclusiva por administrador com motivo obrigatório.
+- **Auditoria financeira**: edições, estornos, exclusões recuperáveis e restaurações de lançamentos guardam
+  responsável, data, estado anterior e estado posterior. Pagamentos confirmados não são apagáveis pelo painel.
+- **Comprovantes opcionais**: upload pelo aplicativo para pagamentos e pelo painel para receitas/despesas,
+  com armazenamento privado e download autorizado.
+- **Perfis administrativos**: administrador, tesoureiro e somente consulta, preservando `member` para acesso do atleta.
+- **Exportações**: relatórios em PDF e CSV UTF-8 compatível com Excel.
+- **Testes** (PHPUnit): fluxo de domínio, API, isolamento multi-tenant, regras e controles financeiros e smoke dos painéis Filament (42 testes).
 
 ### Notes
 - Provider Pix real **ainda não integrado** — `FakePixGateway` ativo até aprovação (ver tabela comparativa no resumo do PR).
@@ -42,3 +58,6 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 CONTRACT_UPDATE: api-v1-inicial (12 endpoints; contrato em `/docs/api`, export em `storage/api.json`)
 
 CONTRACT_UPDATE: api-v1-multi-tenant (`organizations`, `active_organization_id` e cabeçalho `X-Organization-Id`)
+
+CONTRACT_UPDATE: regras-financeiras-e-comprovantes (`gross_amount_cents`, descontos, encargos,
+`has_receipt` e upload/download em `/api/v1/payments/{payment}/receipt`)

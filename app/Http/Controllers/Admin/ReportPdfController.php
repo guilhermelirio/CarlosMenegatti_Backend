@@ -28,7 +28,10 @@ class ReportPdfController extends Controller
 
         abort_unless($user instanceof User && $user->organizations()
             ->whereKey($organization->getKey())
-            ->wherePivot('role', OrganizationRole::Admin->value)
+            ->wherePivotIn('role', array_map(
+                fn (OrganizationRole $role): string => $role->value,
+                array_filter(OrganizationRole::cases(), fn (OrganizationRole $role): bool => $role->canAccessPanel()),
+            ))
             ->exists(), 404);
 
         $currentOrganization->set($organization);
@@ -45,7 +48,7 @@ class ReportPdfController extends Controller
                 'periodLabel' => $from->format('d/m/Y').' – '.$to->format('d/m/Y'),
                 'generatedAt' => CarbonImmutable::now()->format('d/m/Y H:i'),
                 'cash' => $reports->cashFlowByPeriod($from, $to),
-                'series' => $reports->cashFlowSeries(6),
+                'series' => $reports->cashFlowSeriesForPeriod($from, $to),
                 'delinquency' => $delinquency,
                 'totalOwed' => array_sum(array_column($delinquency, 'total_owed_cents')),
                 'money' => fn (int $cents) => Money::formatBRL($cents),

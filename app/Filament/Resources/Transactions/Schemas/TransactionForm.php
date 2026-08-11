@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Transactions\Schemas;
 use App\Enums\TransactionType;
 use App\Filament\Support\MoneyField;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -45,6 +46,14 @@ class TransactionForm
                     ->preload(),
                 TextInput::make('description')
                     ->label('Descrição')
+                    ->columnSpanFull(),
+                FileUpload::make('receipt_path')
+                    ->label('Comprovante (opcional)')
+                    ->disk('local')
+                    ->directory('financial-receipts')
+                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
+                    ->maxSize(5120)
+                    ->downloadable()
                     ->columnSpanFull(),
             ]);
     }

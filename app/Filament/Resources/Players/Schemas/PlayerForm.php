@@ -12,6 +12,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
 class PlayerForm
@@ -50,11 +51,25 @@ class PlayerForm
                     ->helperText('Deixe em branco para usar o valor padrão da configuração.'),
                 MoneyField::make('daily_fee_cents', 'Diária individual (opcional)')
                     ->helperText('Deixe em branco para usar o valor padrão da configuração.'),
+                Toggle::make('is_permanently_exempt')
+                    ->label('Gratuidade permanente')
+                    ->helperText('Gera o histórico mensal como isento, sem valor a pagar.'),
+                MoneyField::make('monthly_discount_cents', 'Desconto fixo mensal')
+                    ->helperText('Pode ser combinado com o desconto percentual.'),
+                TextInput::make('monthly_discount_percent')
+                    ->label('Desconto mensal')
+                    ->numeric()
+                    ->integer()
+                    ->minValue(0)
+                    ->maxValue(100)
+                    ->suffix('%')
+                    ->default(0),
                 Select::make('user_id')
                     ->label('Login do app (opcional)')
                     ->relationship('user', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->helperText('Convidados nunca possuem acesso ao aplicativo.'),
                 Textarea::make('notes')
                     ->label('Observações')
                     ->columnSpanFull(),

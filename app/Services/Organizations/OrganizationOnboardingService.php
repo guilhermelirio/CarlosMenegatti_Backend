@@ -48,6 +48,8 @@ final readonly class OrganizationOnboardingService
             Setting::DEFAULT_MONTHLY_FEE_CENTS => '5000',
             Setting::DEFAULT_DAILY_FEE_CENTS => '2000',
             Setting::MONTHLY_FEE_DUE_DAY => '10',
+            Setting::LATE_FEE_PERCENT => '0',
+            Setting::MONTHLY_INTEREST_PERCENT => '0',
         ];
 
         foreach ($settings as $key => $value) {
@@ -58,7 +60,7 @@ final readonly class OrganizationOnboardingService
     private function createDefaultCategories(): void
     {
         $categories = [
-            TransactionType::Income->value => ['Mensalidade', 'Diária', 'Patrocínio'],
+            TransactionType::Income->value => ['Mensalidade', 'Diária', 'Convidado', 'Patrocínio'],
             TransactionType::Expense->value => ['Aluguel do campo', 'Material esportivo', 'Arbitragem', 'Água', 'Premiação'],
         ];
 

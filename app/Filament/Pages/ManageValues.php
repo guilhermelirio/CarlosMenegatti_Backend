@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Models\Organization;
 use App\Models\Setting;
+use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -40,12 +43,24 @@ class ManageValues extends Page implements HasSchemas
     /** @var array<string, mixed> */
     public ?array $data = [];
 
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+        $tenant = Filament::getTenant();
+
+        return $user instanceof User
+            && $tenant instanceof Organization
+            && ($user->roleForOrganization($tenant)?->canManageFinance() ?? false);
+    }
+
     public function mount(): void
     {
         $this->form->fill([
             'default_monthly_fee' => number_format(Setting::getInt(Setting::DEFAULT_MONTHLY_FEE_CENTS) / 100, 2, '.', ''),
             'default_daily_fee' => number_format(Setting::getInt(Setting::DEFAULT_DAILY_FEE_CENTS) / 100, 2, '.', ''),
             'monthly_fee_due_day' => Setting::getInt(Setting::MONTHLY_FEE_DUE_DAY, 10),
+            'late_fee_percent' => Setting::getInt(Setting::LATE_FEE_PERCENT),
+            'monthly_interest_percent' => Setting::getInt(Setting::MONTHLY_INTEREST_PERCENT),
             'pix_key_type' => Setting::get(Setting::PIX_KEY_TYPE, 'email'),
             'pix_key' => Setting::get(Setting::PIX_KEY),
             'pix_receiver_name' => Setting::get(Setting::PIX_RECEIVER_NAME),
@@ -108,6 +123,28 @@ class ManageValues extends Page implements HasSchemas
                             ->required(),
                     ])
                     ->columns(2),
+
+                Section::make('Atrasos')
+                    ->description('Os valores começam em 0%. Se permanecerem zerados, não haverá multa nem juros.')
+                    ->schema([
+                        TextInput::make('late_fee_percent')
+                            ->label('Multa única')
+                            ->numeric()
+                            ->integer()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->suffix('%')
+                            ->required(),
+                        TextInput::make('monthly_interest_percent')
+                            ->label('Juros ao mês')
+                            ->numeric()
+                            ->integer()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->suffix('%')
+                            ->required(),
+                    ])
+                    ->columns(2),
             ])
             ->statePath('data');
     }
@@ -119,6 +156,8 @@ class ManageValues extends Page implements HasSchemas
         Setting::set(Setting::DEFAULT_MONTHLY_FEE_CENTS, (string) (int) round(((float) $data['default_monthly_fee']) * 100));
         Setting::set(Setting::DEFAULT_DAILY_FEE_CENTS, (string) (int) round(((float) $data['default_daily_fee']) * 100));
         Setting::set(Setting::MONTHLY_FEE_DUE_DAY, (string) (int) $data['monthly_fee_due_day']);
+        Setting::set(Setting::LATE_FEE_PERCENT, (string) (int) $data['late_fee_percent']);
+        Setting::set(Setting::MONTHLY_INTEREST_PERCENT, (string) (int) $data['monthly_interest_percent']);
 
         Setting::set(Setting::PIX_KEY_TYPE, (string) $data['pix_key_type']);
         Setting::set(Setting::PIX_KEY, (string) $data['pix_key']);

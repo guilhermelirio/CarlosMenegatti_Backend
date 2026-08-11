@@ -39,6 +39,9 @@ class Player extends Model
         'photo_path',
         'monthly_fee_cents',
         'daily_fee_cents',
+        'is_permanently_exempt',
+        'monthly_discount_cents',
+        'monthly_discount_percent',
         'notes',
     ];
 
@@ -49,6 +52,9 @@ class Player extends Model
         'joined_at' => 'date',
         'monthly_fee_cents' => 'integer',
         'daily_fee_cents' => 'integer',
+        'is_permanently_exempt' => 'boolean',
+        'monthly_discount_cents' => 'integer',
+        'monthly_discount_percent' => 'integer',
     ];
 
     /** @return BelongsTo<User, $this> */
@@ -86,6 +92,11 @@ class Player extends Model
         return $this->membership_type === MembershipType::Monthly;
     }
 
+    public function isGuest(): bool
+    {
+        return $this->membership_type === MembershipType::Guest;
+    }
+
     /** Effective monthly fee: individual override or the configured default. */
     public function effectiveMonthlyFeeCents(): int
     {
@@ -98,5 +109,23 @@ class Player extends Model
     {
         return $this->daily_fee_cents
             ?? Setting::getInt(Setting::DEFAULT_DAILY_FEE_CENTS);
+    }
+
+    public function effectiveMonthlyDiscountCents(): int
+    {
+        $gross = $this->effectiveMonthlyFeeCents();
+        $percent = min(100, max(0, $this->monthly_discount_percent));
+        $percentageDiscount = intdiv($gross * $percent, 100);
+
+        return min($gross, $percentageDiscount + max(0, $this->monthly_discount_cents));
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (Player $player): void {
+            if ($player->membership_type === MembershipType::Guest) {
+                $player->user_id = null;
+            }
+        });
     }
 }

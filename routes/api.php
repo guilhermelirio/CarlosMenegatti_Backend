@@ -31,6 +31,8 @@ Route::prefix('v1')->group(function (): void {
         Route::post('daily-fees/{dailyFee}/pix', [DailyFeeController::class, 'pix']);
 
         Route::get('payments/{payment}', [PaymentController::class, 'show']);
+        Route::post('payments/{payment}/receipt', [PaymentController::class, 'uploadReceipt']);
+        Route::get('payments/{payment}/receipt', [PaymentController::class, 'downloadReceipt']);
     });
 });
 

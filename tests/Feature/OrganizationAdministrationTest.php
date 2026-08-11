@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\Organizations\OrganizationMembershipService;
 use App\Services\Organizations\OrganizationOnboardingService;
 use App\Tenancy\CurrentOrganization;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -45,7 +46,7 @@ class OrganizationAdministrationTest extends TestCase
             'role' => OrganizationRole::Admin->value,
         ]);
         $this->assertSame('5000', Setting::get(Setting::DEFAULT_MONTHLY_FEE_CENTS));
-        $this->assertSame(8, Category::query()->where('is_system', true)->count());
+        $this->assertSame(9, Category::query()->where('is_system', true)->count());
     }
 
     public function test_can_create_a_new_user_and_membership(): void
@@ -117,5 +118,26 @@ class OrganizationAdministrationTest extends TestCase
         $this->actingAs($administrator)
             ->get(route('reports.pdf', ['organization' => $other]))
             ->assertNotFound();
+    }
+
+    public function test_treasurer_and_viewer_can_access_panel_but_member_cannot(): void
+    {
+        foreach ([OrganizationRole::Treasurer, OrganizationRole::Viewer, OrganizationRole::Member] as $role) {
+            $user = User::factory()->create();
+            $this->organization->users()->attach($user->id, ['role' => $role->value]);
+
+            $this->assertSame($role !== OrganizationRole::Member, $user->canAccessPanel(Filament::getPanel('admin')));
+        }
+    }
+
+    public function test_financial_report_can_be_exported_as_csv_for_excel(): void
+    {
+        $administrator = User::factory()->create();
+        OrganizationMembership::factory()->administrator()->create(['user_id' => $administrator->id]);
+
+        $this->actingAs($administrator)
+            ->get(route('reports.csv', ['organization' => $this->organization]))
+            ->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8');
     }
 }

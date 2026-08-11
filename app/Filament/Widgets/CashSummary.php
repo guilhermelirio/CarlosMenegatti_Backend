@@ -39,7 +39,7 @@ class CashSummary extends StatsOverviewWidget
                 ->color($month['balance_cents'] >= 0 ? 'success' : 'danger'),
 
             Stat::make('Inadimplência', Money::formatBRL($owed))
-                ->description('Total em aberto (mensalidades + diárias)')
+                ->description('Total vencido (mensalidades + diárias)')
                 ->color($owed > 0 ? 'warning' : 'success'),
 
             Stat::make('Atletas ativos', (string) $activePlayers)
