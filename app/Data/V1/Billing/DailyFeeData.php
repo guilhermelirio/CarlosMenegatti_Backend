@@ -13,8 +13,8 @@ class DailyFeeData extends Data
 {
     public function __construct(
         public string $id,
-        public string $game_session_id,
-        public ?string $session_date,
+        public string $game_id,
+        public ?string $game_date,
         public int $amount_cents,
         public string $amount_formatted,
         public string $currency,
@@ -26,8 +26,8 @@ class DailyFeeData extends Data
     {
         return new self(
             id: $fee->id,
-            game_session_id: $fee->game_session_id,
-            session_date: $fee->gameSession?->scheduled_date?->toDateString(),
+            game_id: $fee->game_session_id,
+            game_date: $fee->gameSession?->scheduled_date?->toDateString(),
             amount_cents: $fee->amount_cents,
             amount_formatted: Money::formatBRL($fee->amount_cents),
             currency: 'BRL',

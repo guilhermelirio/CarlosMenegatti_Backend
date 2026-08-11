@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Services\Reports\FinancialReportFilter;
 use App\Services\Reports\ReportService;
 use Carbon\CarbonImmutable;
 use Filament\Widgets\ChartWidget;
@@ -23,7 +24,8 @@ class CashFlowChart extends ChartWidget
     {
         $from = $this->filterDate('from', CarbonImmutable::now()->startOfMonth());
         $to = $this->filterDate('to', CarbonImmutable::now()->endOfMonth());
-        $series = app(ReportService::class)->cashFlowSeriesForPeriod($from, $to);
+        $filter = FinancialReportFilter::fromArray($this->pageFilters);
+        $series = app(ReportService::class)->cashFlowSeriesForPeriod($from, $to, $filter);
 
         return [
             'datasets' => [

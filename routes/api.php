@@ -24,8 +24,8 @@ Route::prefix('v1')->group(function (): void {
         Route::get('me/daily-fees', [DailyFeeController::class, 'index']);
         Route::get('me/payments', [PaymentController::class, 'index']);
 
-        Route::get('sessions', [GameSessionController::class, 'index']);
-        Route::post('sessions/{gameSession}/confirm', [GameSessionController::class, 'confirm']);
+        Route::get('games', [GameSessionController::class, 'index']);
+        Route::post('games/{gameSession}/confirm', [GameSessionController::class, 'confirm']);
 
         Route::post('monthly-fees/{monthlyFee}/pix', [MonthlyFeeController::class, 'pix']);
         Route::post('daily-fees/{dailyFee}/pix', [DailyFeeController::class, 'pix']);

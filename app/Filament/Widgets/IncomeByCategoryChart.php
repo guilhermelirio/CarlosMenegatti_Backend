@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Services\Reports\FinancialReportFilter;
 use App\Services\Reports\ReportService;
 use Carbon\CarbonImmutable;
 use Filament\Widgets\ChartWidget;
@@ -24,7 +25,8 @@ class IncomeByCategoryChart extends ChartWidget
         $from = $this->filterDate('from', CarbonImmutable::now()->startOfMonth());
         $to = $this->filterDate('to', CarbonImmutable::now()->endOfMonth());
 
-        $rows = app(ReportService::class)->incomeBySource($from, $to);
+        $filter = FinancialReportFilter::fromArray($this->pageFilters);
+        $rows = app(ReportService::class)->incomeBySource($from, $to, $filter);
 
         $palette = ['#16a34a', '#f97316', '#0ea5e9', '#a855f7', '#eab308', '#ef4444', '#14b8a6'];
         $colors = [];

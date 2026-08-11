@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\OrganizationRole;
+use App\Models\Organization;
+use App\Models\Player;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -53,7 +55,8 @@ class FilamentSmokeTest extends TestCase
 
         $staff = $this->staff();
 
-        $this->actingAs($staff)->get('/admin/new')->assertSuccessful();
+        $this->assertFalse($staff->can('create', Organization::class));
+        $this->actingAs($staff)->get('/admin/new')->assertNotFound();
 
         foreach ($urls as $url) {
             $this->actingAs($staff)
@@ -62,10 +65,19 @@ class FilamentSmokeTest extends TestCase
         }
     }
 
-    public function test_non_staff_cannot_access_admin(): void
+    public function test_athlete_can_use_app_but_cannot_access_admin_panel(): void
     {
-        $user = User::factory()->create(['is_staff' => false]);
+        $user = User::factory()->create(['is_staff' => false, 'password' => bcrypt('password')]);
+        $this->organization->users()->attach($user->id, ['role' => OrganizationRole::Member->value]);
+        Player::factory()->monthly()->create(['user_id' => $user->id]);
 
-        $this->actingAs($user)->get('/admin')->assertForbidden();
+        $this->postJson('/api/v1/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertOk()->assertJsonStructure(['token', 'player']);
+
+        $this->actingAs($user)
+            ->get("/admin/{$this->organization->slug}")
+            ->assertForbidden();
     }
 }

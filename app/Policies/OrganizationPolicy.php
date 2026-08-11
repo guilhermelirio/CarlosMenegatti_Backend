@@ -12,9 +12,7 @@ class OrganizationPolicy
 {
     public function create(User $user): bool
     {
-        return $user->is_staff || $user->organizations()
-            ->wherePivot('role', OrganizationRole::Admin->value)
-            ->exists();
+        return false;
     }
 
     public function update(User $user, Organization $organization): bool

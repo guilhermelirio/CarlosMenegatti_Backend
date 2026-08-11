@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\MembershipType;
 use App\Enums\OrganizationRole;
+use App\Enums\TransactionType;
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
 use App\Models\User;
+use App\Services\Reports\FinancialReportFilter;
 use App\Services\Reports\ReportService;
 use App\Tenancy\CurrentOrganization;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportCsvController extends Controller
@@ -32,13 +36,23 @@ class ReportCsvController extends Controller
             ->exists(), 404);
 
         $currentOrganization->set($organization);
-        $from = CarbonImmutable::parse($request->query('from', CarbonImmutable::now()->startOfMonth()->toDateString()));
-        $to = CarbonImmutable::parse($request->query('to', CarbonImmutable::now()->endOfMonth()->toDateString()));
-        $cash = $reports->cashFlowByPeriod($from, $to);
-        $incomeBySource = $reports->incomeBySource($from, $to);
-        $delinquency = $reports->delinquencyDetailed();
 
         try {
+            $validated = $request->validate([
+                'from' => ['nullable', 'date'],
+                'to' => ['nullable', 'date', 'after_or_equal:from'],
+                'player_id' => ['nullable', 'ulid'],
+                'membership_type' => ['nullable', Rule::enum(MembershipType::class)],
+                'category_id' => ['nullable', 'ulid'],
+                'transaction_type' => ['nullable', Rule::enum(TransactionType::class)],
+            ]);
+            $from = CarbonImmutable::parse($validated['from'] ?? CarbonImmutable::now()->startOfMonth());
+            $to = CarbonImmutable::parse($validated['to'] ?? CarbonImmutable::now()->endOfMonth());
+            $filter = FinancialReportFilter::fromArray($validated);
+            $cash = $reports->cashFlowByPeriod($from, $to, $filter);
+            $incomeBySource = $reports->incomeBySource($from, $to, $filter);
+            $delinquency = $reports->delinquencyDetailed($filter);
+
             return response()->streamDownload(function () use ($organization, $from, $to, $cash, $incomeBySource, $delinquency): void {
                 $output = fopen('php://output', 'wb');
                 abort_if($output === false, 500);

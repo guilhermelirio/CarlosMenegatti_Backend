@@ -4,7 +4,6 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Tenancy\EditOrganizationProfile;
-use App\Filament\Pages\Tenancy\RegisterOrganization;
 use App\Filament\Widgets\CashSummary;
 use App\Filament\Widgets\UpcomingSessions;
 use App\Http\Middleware\SetCurrentOrganizationFromFilament;
@@ -18,6 +17,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\Width;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -36,8 +36,8 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->maxContentWidth(Width::Full)
             ->tenant(Organization::class, slugAttribute: 'slug')
-            ->tenantRegistration(RegisterOrganization::class)
             ->tenantProfile(EditOrganizationProfile::class)
             ->login(Login::class)
             ->spa()

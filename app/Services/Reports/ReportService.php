@@ -6,12 +6,11 @@ namespace App\Services\Reports;
 
 use App\Enums\FeeStatus;
 use App\Enums\TransactionType;
-use App\Models\DailyFee;
-use App\Models\MonthlyFee;
 use App\Models\Player;
 use App\Models\Transaction;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 
 final class ReportService
 {
@@ -21,12 +20,15 @@ final class ReportService
      *
      * @return list<array<string, int|string>>
      */
-    public function delinquencyDetailed(): array
+    public function delinquencyDetailed(?FinancialReportFilter $filter = null): array
     {
         $open = [FeeStatus::Overdue];
         $now = CarbonImmutable::now();
 
-        return Player::query()
+        $players = Player::query();
+        $this->applyPlayerFilters($players, $filter);
+
+        return $players
             ->withCount([
                 'monthlyFees as open_monthly' => fn ($q) => $q->whereIn('status', $open),
                 'dailyFees as open_daily' => fn ($q) => $q->whereIn('status', $open),
@@ -73,8 +75,11 @@ final class ReportService
      *
      * @return list<array{label: string, income_cents: int, expense_cents: int, balance_cents: int}>
      */
-    public function cashFlowSeriesForPeriod(CarbonInterface $from, CarbonInterface $to): array
-    {
+    public function cashFlowSeriesForPeriod(
+        CarbonInterface $from,
+        CarbonInterface $to,
+        ?FinancialReportFilter $filter = null,
+    ): array {
         $fromDate = CarbonImmutable::parse($from->toDateString())->startOfDay();
         $toDate = CarbonImmutable::parse($to->toDateString())->endOfDay();
 
@@ -89,7 +94,7 @@ final class ReportService
         while ($cursor->lessThanOrEqualTo($lastMonth)) {
             $periodStart = $cursor->isBefore($fromDate) ? $fromDate : $cursor->startOfMonth();
             $periodEnd = $cursor->endOfMonth()->isAfter($toDate) ? $toDate : $cursor->endOfMonth();
-            $data = $this->cashFlowByPeriod($periodStart, $periodEnd);
+            $data = $this->cashFlowByPeriod($periodStart, $periodEnd, $filter);
 
             $series[] = [
                 'label' => $cursor->format('m/Y'),
@@ -104,14 +109,9 @@ final class ReportService
         return $series;
     }
 
-    public function totalOwedCents(): int
+    public function totalOwedCents(?FinancialReportFilter $filter = null): int
     {
-        $open = [FeeStatus::Overdue];
-
-        $monthly = (int) MonthlyFee::query()->whereIn('status', $open)->sum('amount_cents');
-        $daily = (int) DailyFee::query()->whereIn('status', $open)->sum('amount_cents');
-
-        return $monthly + $daily;
+        return array_sum(array_column($this->delinquencyDetailed($filter), 'total_owed_cents'));
     }
 
     /**
@@ -119,10 +119,14 @@ final class ReportService
      *
      * @return array{income_cents: int, expense_cents: int, balance_cents: int}
      */
-    public function cashFlowByPeriod(CarbonInterface $from, CarbonInterface $to): array
-    {
+    public function cashFlowByPeriod(
+        CarbonInterface $from,
+        CarbonInterface $to,
+        ?FinancialReportFilter $filter = null,
+    ): array {
         $base = Transaction::query()
             ->whereBetween('occurred_on', [$from->toDateString(), $to->toDateString()]);
+        $this->applyTransactionFilters($base, $filter);
 
         $income = (int) (clone $base)->where('type', TransactionType::Income)->sum('amount_cents');
         $expense = (int) (clone $base)->where('type', TransactionType::Expense)->sum('amount_cents');
@@ -139,13 +143,19 @@ final class ReportService
      *
      * @return list<array<string, int|string>>
      */
-    public function incomeBySource(CarbonInterface $from, CarbonInterface $to): array
-    {
-        return Transaction::query()
+    public function incomeBySource(
+        CarbonInterface $from,
+        CarbonInterface $to,
+        ?FinancialReportFilter $filter = null,
+    ): array {
+        $transactions = Transaction::query()
             ->selectRaw('category_id, SUM(amount_cents) as total_cents')
             ->with('category:id,name')
             ->where('type', TransactionType::Income)
-            ->whereBetween('occurred_on', [$from->toDateString(), $to->toDateString()])
+            ->whereBetween('occurred_on', [$from->toDateString(), $to->toDateString()]);
+        $this->applyTransactionFilters($transactions, $filter);
+
+        return $transactions
             ->groupBy('category_id')
             ->get()
             ->map(fn (Transaction $t) => [
@@ -155,5 +165,34 @@ final class ReportService
             ->sortByDesc('total_cents')
             ->values()
             ->all();
+    }
+
+    /** @param Builder<Transaction> $query */
+    private function applyTransactionFilters(Builder $query, ?FinancialReportFilter $filter): void
+    {
+        if ($filter === null) {
+            return;
+        }
+
+        $query
+            ->when($filter->playerId, fn (Builder $query, string $playerId) => $query->where('player_id', $playerId))
+            ->when($filter->categoryId, fn (Builder $query, string $categoryId) => $query->where('category_id', $categoryId))
+            ->when($filter->transactionType, fn (Builder $query, TransactionType $type) => $query->where('type', $type))
+            ->when($filter->membershipType, fn (Builder $query, $type) => $query->whereHas(
+                'player',
+                fn (Builder $playerQuery) => $playerQuery->where('membership_type', $type),
+            ));
+    }
+
+    /** @param Builder<Player> $query */
+    private function applyPlayerFilters(Builder $query, ?FinancialReportFilter $filter): void
+    {
+        if ($filter === null) {
+            return;
+        }
+
+        $query
+            ->when($filter->playerId, fn (Builder $query, string $playerId) => $query->whereKey($playerId))
+            ->when($filter->membershipType, fn (Builder $query, $type) => $query->where('membership_type', $type));
     }
 }

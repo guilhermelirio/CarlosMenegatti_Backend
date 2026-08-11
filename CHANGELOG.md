@@ -38,6 +38,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   vínculo, status e atleta; mensalidades por competência, status e atleta.
 - **Relatórios por período**: indicadores, gráficos e PDF usam o mesmo intervalo selecionado, inclusive
   nos meses inicial e final.
+- **Filtros combinados dos relatórios**: período, atleta, vínculo, categoria e tipo de lançamento são
+  aplicados aos indicadores, gráficos e exportações PDF/CSV.
 - **Preservação do caixa**: exclusões de lançamentos são recuperáveis, e remoções definitivas permanecem bloqueadas.
 - **Regras de cobrança**: descontos fixos e percentuais permanentes ou por mensalidade, isenção mensal,
   gratuidade permanente e multa/juros configuráveis por organização com padrão de 0%.
@@ -49,10 +51,15 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 - **Comprovantes opcionais**: upload pelo aplicativo para pagamentos e pelo painel para receitas/despesas,
   com armazenamento privado e download autorizado.
 - **Perfis administrativos**: administrador, tesoureiro e somente consulta, preservando `member` para acesso do atleta.
+- **Separação de acesso**: atletas autenticam somente pela API do aplicativo e não entram no painel administrativo.
+- **Painel em largura total** e terminologia “Jogo” no painel e no contrato público da API.
 - **Exportações**: relatórios em PDF e CSV UTF-8 compatível com Excel.
 - **Backup diário**: banco PostgreSQL e comprovantes privados, com arquivo verificável e criptografável,
   retenção automática, monitoramento de integridade e volumes persistentes separados em produção.
 - **Testes** (PHPUnit): fluxo de domínio, API, isolamento multi-tenant, regras e controles financeiros e smoke dos painéis Filament (42 testes).
+
+### Changed
+- **Criação de organizações restrita**: o painel não exibe mais “Criar organização”, a rota pública de cadastro foi removida e a política nega a criação por usuários do painel.
 
 ### Notes
 - Provider Pix real **ainda não integrado** — `FakePixGateway` ativo até aprovação (ver tabela comparativa no resumo do PR).
@@ -63,3 +70,5 @@ CONTRACT_UPDATE: api-v1-multi-tenant (`organizations`, `active_organization_id` 
 
 CONTRACT_UPDATE: regras-financeiras-e-comprovantes (`gross_amount_cents`, descontos, encargos,
 `has_receipt` e upload/download em `/api/v1/payments/{payment}/receipt`)
+
+CONTRACT_UPDATE: jogos (`/api/v1/games`, `game_id` e `game_date` substituem os nomes públicos antigos com “session”)

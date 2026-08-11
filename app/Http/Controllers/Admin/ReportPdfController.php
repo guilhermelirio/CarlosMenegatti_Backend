@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\MembershipType;
 use App\Enums\OrganizationRole;
+use App\Enums\TransactionType;
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
 use App\Models\User;
+use App\Services\Reports\FinancialReportFilter;
 use App\Services\Reports\ReportService;
 use App\Support\Money;
 use App\Tenancy\CurrentOrganization;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
 class ReportPdfController extends Controller
@@ -37,18 +41,27 @@ class ReportPdfController extends Controller
         $currentOrganization->set($organization);
 
         try {
-            $from = CarbonImmutable::parse($request->query('from', CarbonImmutable::now()->startOfMonth()->toDateString()));
-            $to = CarbonImmutable::parse($request->query('to', CarbonImmutable::now()->endOfMonth()->toDateString()));
+            $validated = $request->validate([
+                'from' => ['nullable', 'date'],
+                'to' => ['nullable', 'date', 'after_or_equal:from'],
+                'player_id' => ['nullable', 'ulid'],
+                'membership_type' => ['nullable', Rule::enum(MembershipType::class)],
+                'category_id' => ['nullable', 'ulid'],
+                'transaction_type' => ['nullable', Rule::enum(TransactionType::class)],
+            ]);
+            $from = CarbonImmutable::parse($validated['from'] ?? CarbonImmutable::now()->startOfMonth());
+            $to = CarbonImmutable::parse($validated['to'] ?? CarbonImmutable::now()->endOfMonth());
+            $filter = FinancialReportFilter::fromArray($validated);
 
-            $delinquency = $reports->delinquencyDetailed();
+            $delinquency = $reports->delinquencyDetailed($filter);
 
             $data = [
                 'from' => $from,
                 'to' => $to,
                 'periodLabel' => $from->format('d/m/Y').' – '.$to->format('d/m/Y'),
                 'generatedAt' => CarbonImmutable::now()->format('d/m/Y H:i'),
-                'cash' => $reports->cashFlowByPeriod($from, $to),
-                'series' => $reports->cashFlowSeriesForPeriod($from, $to),
+                'cash' => $reports->cashFlowByPeriod($from, $to, $filter),
+                'series' => $reports->cashFlowSeriesForPeriod($from, $to, $filter),
                 'delinquency' => $delinquency,
                 'totalOwed' => array_sum(array_column($delinquency, 'total_owed_cents')),
                 'money' => fn (int $cents) => Money::formatBRL($cents),

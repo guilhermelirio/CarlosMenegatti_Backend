@@ -15,7 +15,7 @@ use Spatie\LaravelData\DataCollection;
 class GameSessionController extends ApiController
 {
     /**
-     * Upcoming sessions with the athlete's confirmation status.
+     * Upcoming games with the athlete's confirmation status.
      *
      * @return DataCollection<int, GameSessionData>
      */
@@ -38,7 +38,7 @@ class GameSessionController extends ApiController
         return GameSessionData::collect($data, DataCollection::class);
     }
 
-    /** Confirm (or un-confirm) the athlete's presence in a session. */
+    /** Confirm (or decline) the athlete's presence in a game. */
     public function confirm(
         ConfirmAttendanceData $data,
         Request $request,

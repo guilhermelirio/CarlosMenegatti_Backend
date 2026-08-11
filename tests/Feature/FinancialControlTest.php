@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\MembershipType;
 use App\Enums\TransactionType;
 use App\Filament\Resources\Transactions\TransactionResource;
+use App\Models\Category;
+use App\Models\Player;
 use App\Models\Transaction;
+use App\Services\Reports\FinancialReportFilter;
 use App\Services\Reports\ReportService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -76,5 +80,48 @@ class FinancialControlTest extends TestCase
 
         $this->assertFalse(TransactionResource::canDelete($transaction));
         $this->assertFalse(TransactionResource::canDeleteAny());
+    }
+
+    public function test_financial_report_combines_player_membership_category_and_type_filters(): void
+    {
+        $monthly = Player::factory()->monthly()->create();
+        $daily = Player::factory()->daily()->create();
+        $income = Category::factory()->income()->create();
+        $sponsorship = Category::factory()->income()->create();
+
+        Transaction::factory()->income()->create([
+            'player_id' => $monthly->id,
+            'category_id' => $income->id,
+            'amount_cents' => 1000,
+            'occurred_on' => '2026-08-01',
+        ]);
+        Transaction::factory()->income()->create([
+            'player_id' => $daily->id,
+            'category_id' => $income->id,
+            'amount_cents' => 2000,
+            'occurred_on' => '2026-08-02',
+        ]);
+        Transaction::factory()->income()->create([
+            'player_id' => $monthly->id,
+            'category_id' => $sponsorship->id,
+            'amount_cents' => 4000,
+            'occurred_on' => '2026-08-03',
+        ]);
+
+        $reports = app(ReportService::class);
+        $from = CarbonImmutable::parse('2026-08-01');
+        $to = CarbonImmutable::parse('2026-08-31');
+
+        $byPlayerAndCategory = $reports->cashFlowByPeriod($from, $to, new FinancialReportFilter(
+            playerId: $monthly->id,
+            categoryId: $income->id,
+            transactionType: TransactionType::Income,
+        ));
+        $byMembership = $reports->cashFlowByPeriod($from, $to, new FinancialReportFilter(
+            membershipType: MembershipType::Daily,
+        ));
+
+        $this->assertSame(1000, $byPlayerAndCategory['income_cents']);
+        $this->assertSame(2000, $byMembership['income_cents']);
     }
 }

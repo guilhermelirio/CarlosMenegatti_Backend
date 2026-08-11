@@ -5,10 +5,12 @@ API e painel administrativo para múltiplas organizações, construídos com Lar
 ## Arquitetura
 
 - Cada tabela de domínio possui `organization_id` e um escopo global obrigatório.
-- Usuários pertencem a organizações por `organization_user`, com papel `admin` ou `member`.
+- Usuários pertencem a organizações por `organization_user`: atletas (`member`) entram somente no aplicativo;
+  administrador, tesoureiro e consulta entram somente no painel administrativo.
 - A API usa Sanctum e resolve o tenant por `X-Organization-Id`. O cabeçalho é opcional quando o usuário possui uma única organização.
 - O Filament usa tenancy nativa em `/admin/{organization-slug}`.
-- Administradores podem criar organizações em `/admin/new`, editar o perfil do tenant e gerenciar usuários e papéis pelo próprio painel.
+- Administradores podem editar o perfil da organização e gerenciar usuários e papéis pelo próprio painel;
+  a criação de novas organizações não fica disponível no painel.
 - Cada organização mantém pelo menos um administrador; remover um vínculo nunca apaga a conta global do usuário.
 - O caixa permite filtrar por período, tipo, categoria e atleta; lançamentos podem ser editados, estornados ou excluídos de forma recuperável e auditada.
 - Cobranças podem ser filtradas por período, tipo, vínculo, situação e atleta; os relatórios e o PDF respeitam o período selecionado.
@@ -19,6 +21,10 @@ API e painel administrativo para múltiplas organizações, construídos com Lar
 - Edições, estornos, exclusões recuperáveis e restaurações do caixa geram histórico de auditoria com responsável e valores anteriores/novos.
 - Comprovantes são opcionais e podem ser anexados aos pagamentos pelo aplicativo ou aos lançamentos pelo painel.
 - O painel possui perfis de administrador, tesoureiro e somente consulta; relatórios podem ser exportados em PDF e CSV compatível com Excel.
+- Os relatórios podem ser filtrados em conjunto por período, atleta, vínculo, categoria e tipo de lançamento;
+  a seleção também é aplicada aos indicadores, gráficos, PDF e CSV.
+- Todas as páginas operacionais do painel usam a largura total disponível. No aplicativo e no painel, o termo
+  apresentado ao usuário é “Jogo”; “sessão” permanece apenas como detalhe técnico interno legado do banco.
 - Horizon processa filas Redis; o scheduler roda separadamente; Pulse fica disponível para administradores.
 - Reverb não faz parte da stack enquanto não existir um caso real de atualização em tempo real.
 

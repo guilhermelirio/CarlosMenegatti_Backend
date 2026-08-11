@@ -7,6 +7,7 @@ namespace App\Filament\Widgets;
 use App\Enums\PlayerStatus;
 use App\Models\Player;
 use App\Services\CashFlow\CashFlowService;
+use App\Services\Reports\FinancialReportFilter;
 use App\Services\Reports\ReportService;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
@@ -27,16 +28,21 @@ class FinancialStats extends StatsOverviewWidget
         $reports = app(ReportService::class);
         $from = $this->filterDate('from', CarbonImmutable::now()->startOfMonth());
         $to = $this->filterDate('to', CarbonImmutable::now()->endOfMonth());
+        $filter = FinancialReportFilter::fromArray($this->pageFilters);
 
-        $period = $reports->cashFlowByPeriod($from, $to);
-        $series = $reports->cashFlowSeriesForPeriod($from, $to);
+        $period = $reports->cashFlowByPeriod($from, $to, $filter);
+        $series = $reports->cashFlowSeriesForPeriod($from, $to, $filter);
         $incomeSpark = array_map(fn ($r) => round($r['income_cents'] / 100), $series);
         $expenseSpark = array_map(fn ($r) => round($r['expense_cents'] / 100), $series);
         $balanceSpark = array_map(fn ($r) => round($r['balance_cents'] / 100), $series);
 
         $balance = app(CashFlowService::class)->balanceCents();
-        $owed = $reports->totalOwedCents();
-        $activePlayers = Player::query()->where('status', PlayerStatus::Active)->count();
+        $owed = $reports->totalOwedCents($filter);
+        $activePlayers = Player::query()
+            ->where('status', PlayerStatus::Active)
+            ->when($filter->playerId, fn ($query, string $playerId) => $query->whereKey($playerId))
+            ->when($filter->membershipType, fn ($query, $type) => $query->where('membership_type', $type))
+            ->count();
 
         return [
             Stat::make('Saldo do caixa', Money::formatBRL($balance))
