@@ -17,9 +17,13 @@ API e painel administrativo para múltiplas organizações, construídos com Lar
 - Mensalidades aceitam descontos fixos e percentuais, por jogador ou por cobrança, além de isenção mensal e gratuidade permanente.
 - Convidados ficam registrados sem login no aplicativo e geram receita por partida na categoria própria.
 - Multa e juros mensais são configuráveis por organização e começam em 0%.
+- O Pix manual usa `piggly/php-pix` para validar a chave e gerar localmente o copia-e-cola e o QR Code;
+  a confirmação do recebimento permanece sob responsabilidade do tesoureiro.
 - O fechamento mensal fotografa caixa e inadimplência; meses fechados ficam bloqueados e somente administradores podem reabri-los.
 - Edições, estornos, exclusões recuperáveis e restaurações do caixa geram histórico de auditoria com responsável e valores anteriores/novos.
 - Comprovantes são opcionais e podem ser anexados aos pagamentos pelo aplicativo ou aos lançamentos pelo painel.
+- O aplicativo consome uma lista única de cobranças, reunindo mensalidades e diárias, com detalhe e pagamento via Pix.
+- Cada jogo possui limite de jogadores configurado pelo administrador; a API informa ocupação e vagas e impede confirmações acima do limite.
 - O painel possui perfis de administrador, tesoureiro e somente consulta; relatórios podem ser exportados em PDF e CSV compatível com Excel.
 - Os relatórios podem ser filtrados em conjunto por período, atleta, vínculo, categoria e tipo de lançamento;
   a seleção também é aplicada aos indicadores, gráficos, PDF e CSV.

@@ -9,11 +9,12 @@ use App\Integrations\Pix\Dto\CanonicalPixStatus;
 use App\Integrations\Pix\Dto\PixCharge;
 use App\Integrations\Pix\Dto\PixChargeRequest;
 use App\Integrations\Pix\Dto\PixWebhookEvent;
+use App\Integrations\Pix\Exceptions\PixConfigurationException;
 use App\Integrations\Pix\Exceptions\WebhookSignatureException;
-use App\Integrations\Pix\Support\PixBrCode;
-use App\Integrations\Pix\Support\QrCodeGenerator;
+use App\Integrations\Pix\Support\PigglyPixCode;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Throwable;
 
 /**
  * Pix MANUAL — sem gateway/provedor.
@@ -33,25 +34,30 @@ final class StaticPixGateway implements PixGatewayContract
     public function createCharge(PixChargeRequest $request): PixCharge
     {
         $key = $this->setting(Setting::PIX_KEY, (string) config('pix.static.key', ''));
+        $keyType = $this->setting(Setting::PIX_KEY_TYPE, (string) config('pix.static.key_type', 'email'));
         $receiver = $this->setting(Setting::PIX_RECEIVER_NAME, (string) config('pix.static.receiver_name', 'PELADA'));
         $city = $this->setting(Setting::PIX_CITY, (string) config('pix.static.city', 'SAO PAULO'));
 
-        // O txid referencia o nosso pagamento interno (rastreável, mas informativo).
-        $txid = $request->referenceId;
-
-        $payload = PixBrCode::build(
-            key: $key,
-            receiverName: $receiver,
-            city: $city,
-            amountCents: $request->amountCents,
-            description: $request->description,
-            txid: $txid,
-        );
+        try {
+            $pix = PigglyPixCode::generate(
+                keyType: $keyType,
+                key: $key,
+                receiverName: $receiver,
+                city: $city,
+                amountCents: $request->amountCents,
+                description: $request->description,
+                referenceId: $request->referenceId,
+            );
+        } catch (Throwable) {
+            throw new PixConfigurationException(
+                'A configuração Pix da organização é inválida. Solicite a revisão da chave no painel administrativo.'
+            );
+        }
 
         return new PixCharge(
-            txid: $txid,
-            qrCodePayload: $payload,
-            qrCodeImage: $key === '' ? null : QrCodeGenerator::dataUri($payload),
+            txid: $pix['txid'],
+            qrCodePayload: $pix['payload'],
+            qrCodeImage: $pix['qr_code_image'],
             amountCents: $request->amountCents,
             status: CanonicalPixStatus::Pending,
             provider: $this->slug(),

@@ -26,6 +26,7 @@ class GameSessionController extends ApiController
         $sessions = GameSession::query()
             ->whereDate('scheduled_date', '>=', CarbonImmutable::now()->toDateString())
             ->with(['attendances' => fn ($q) => $q->where('player_id', $player->id)])
+            ->withCount(['attendances as confirmed_count' => fn ($q) => $q->where('confirmed', true)])
             ->orderBy('scheduled_date')
             ->get();
 
@@ -53,6 +54,8 @@ class GameSessionController extends ApiController
             confirmed: $data->confirmed,
             attended: false,
         );
+
+        $gameSession->loadCount(['attendances as confirmed_count' => fn ($q) => $q->where('confirmed', true)]);
 
         return GameSessionData::fromModel($gameSession, $attendance->confirmed, $attendance->attended);
     }

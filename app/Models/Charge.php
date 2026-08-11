@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\FeeStatus;
 use App\Models\Concerns\BelongsToOrganization;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -19,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $amount_cents
  * @property FeeStatus $status
  * @property string $reference_label
+ * @property CarbonInterface $reference_date
+ * @property CarbonInterface|null $paid_at
  */
 class Charge extends Model
 {

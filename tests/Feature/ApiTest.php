@@ -8,12 +8,15 @@ use App\Enums\FeeStatus;
 use App\Enums\OrganizationRole;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Models\DailyFee;
+use App\Models\GameSession;
 use App\Models\MonthlyFee;
 use App\Models\Organization;
 use App\Models\Payment;
 use App\Models\Player;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\Attendance\AttendanceService;
 use App\Services\Billing\PaymentService;
 use App\Tenancy\CurrentOrganization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,6 +35,10 @@ class ApiTest extends TestCase
         $this->setCurrentOrganization();
         Setting::set(Setting::DEFAULT_MONTHLY_FEE_CENTS, '5000');
         Setting::set(Setting::DEFAULT_DAILY_FEE_CENTS, '2000');
+        Setting::set(Setting::PIX_KEY_TYPE, 'email');
+        Setting::set(Setting::PIX_KEY, 'grupo@exemplo.com');
+        Setting::set(Setting::PIX_RECEIVER_NAME, 'CARLOS MENEGATTI FC');
+        Setting::set(Setting::PIX_CITY, 'SAO PAULO');
     }
 
     private function playerUser(): User
@@ -76,6 +83,107 @@ class ApiTest extends TestCase
         $this->getJson('/api/v1/me')->assertOk()->assertJsonPath('id', $user->player->id);
     }
 
+    public function test_player_can_list_and_filter_unified_charges(): void
+    {
+        $user = $this->playerUser();
+        Sanctum::actingAs($user);
+        $monthlyFee = MonthlyFee::factory()->for($user->player)->create([
+            'amount_cents' => 5000,
+            'status' => FeeStatus::Pending,
+        ]);
+        $game = GameSession::factory()->create(['scheduled_date' => '2026-08-11']);
+        $dailyFee = DailyFee::factory()->for($user->player)->for($game)->create([
+            'amount_cents' => 2000,
+            'status' => FeeStatus::Overdue,
+        ]);
+
+        $this->getJson('/api/v1/me/charges')
+            ->assertOk()
+            ->assertJsonCount(2)
+            ->assertJsonFragment([
+                'id' => $monthlyFee->id,
+                'type' => 'monthly',
+                'type_label' => 'Mensalidade',
+                'can_pay' => true,
+            ])
+            ->assertJsonFragment([
+                'id' => $dailyFee->id,
+                'type' => 'daily',
+                'type_label' => 'Diária',
+                'game_id' => $game->id,
+            ]);
+
+        $this->getJson('/api/v1/me/charges?type=daily&status=overdue')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', $dailyFee->id);
+    }
+
+    public function test_player_can_open_and_pay_a_unified_charge_with_pix(): void
+    {
+        $user = $this->playerUser();
+        Sanctum::actingAs($user);
+        $fee = MonthlyFee::factory()->for($user->player)->create([
+            'amount_cents' => 5000,
+            'status' => FeeStatus::Pending,
+        ]);
+
+        $this->getJson("/api/v1/charges/{$fee->id}")
+            ->assertOk()
+            ->assertJsonPath('id', $fee->id)
+            ->assertJsonPath('type', 'monthly');
+
+        $this->postJson("/api/v1/charges/{$fee->id}/pix")
+            ->assertCreated()
+            ->assertJsonPath('method', 'pix')
+            ->assertJsonStructure(['pix' => ['txid', 'qrcode']]);
+    }
+
+    public function test_invalid_pix_configuration_returns_a_stable_api_error(): void
+    {
+        $user = $this->playerUser();
+        Sanctum::actingAs($user);
+        Setting::set(Setting::PIX_KEY_TYPE, 'email');
+        Setting::set(Setting::PIX_KEY, 'chave-invalida');
+        $fee = MonthlyFee::factory()->for($user->player)->create([
+            'amount_cents' => 5000,
+            'status' => FeeStatus::Pending,
+        ]);
+
+        $this->postJson("/api/v1/charges/{$fee->id}/pix")
+            ->assertStatus(503)
+            ->assertJsonPath('error_code', 'PIX_CONFIGURATION_INVALID');
+
+        $this->assertSame(0, Payment::query()->count());
+    }
+
+    public function test_game_exposes_and_enforces_the_configurable_player_limit(): void
+    {
+        $user = $this->playerUser();
+        Sanctum::actingAs($user);
+        $game = GameSession::factory()->create([
+            'scheduled_date' => now()->addDay()->toDateString(),
+            'max_players' => 1,
+        ]);
+        $confirmedPlayer = Player::factory()->monthly()->create();
+        app(AttendanceService::class)->register($game, $confirmedPlayer, confirmed: true, attended: false);
+
+        $this->getJson('/api/v1/games')
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => $game->id,
+                'max_players' => 1,
+                'confirmed_count' => 1,
+                'available_spots' => 0,
+                'is_full' => true,
+            ]);
+
+        $this->postJson("/api/v1/games/{$game->id}/confirm", ['confirmed' => true])
+            ->assertUnprocessable()
+            ->assertJsonPath('error_code', 'VALIDATION_FAILED')
+            ->assertJsonPath('errors.confirmed.0', 'O limite de jogadores deste jogo já foi atingido.');
+    }
+
     public function test_pix_initiation_returns_qrcode(): void
     {
         $user = $this->playerUser();
@@ -103,6 +211,8 @@ class ApiTest extends TestCase
         $otherFee = MonthlyFee::factory()->create(['status' => FeeStatus::Pending]);
 
         $this->postJson("/api/v1/monthly-fees/{$otherFee->id}/pix")->assertForbidden();
+        $this->getJson("/api/v1/charges/{$otherFee->id}")->assertNotFound();
+        $this->postJson("/api/v1/charges/{$otherFee->id}/pix")->assertNotFound();
     }
 
     public function test_webhook_confirms_payment(): void

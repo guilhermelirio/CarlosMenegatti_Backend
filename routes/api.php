@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\ChargeController;
 use App\Http\Controllers\Api\V1\DailyFeeController;
 use App\Http\Controllers\Api\V1\GameSessionController;
 use App\Http\Controllers\Api\V1\MonthlyFeeController;
@@ -23,6 +24,10 @@ Route::prefix('v1')->group(function (): void {
         Route::get('me/monthly-fees', [MonthlyFeeController::class, 'index']);
         Route::get('me/daily-fees', [DailyFeeController::class, 'index']);
         Route::get('me/payments', [PaymentController::class, 'index']);
+        Route::get('me/charges', [ChargeController::class, 'index']);
+
+        Route::get('charges/{charge}', [ChargeController::class, 'show']);
+        Route::post('charges/{charge}/pix', [ChargeController::class, 'pix']);
 
         Route::get('games', [GameSessionController::class, 'index']);
         Route::post('games/{gameSession}/confirm', [GameSessionController::class, 'confirm']);

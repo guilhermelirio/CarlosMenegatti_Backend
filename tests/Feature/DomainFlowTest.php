@@ -32,6 +32,10 @@ class DomainFlowTest extends TestCase
         Setting::set(Setting::DEFAULT_MONTHLY_FEE_CENTS, '5000');
         Setting::set(Setting::DEFAULT_DAILY_FEE_CENTS, '2000');
         Setting::set(Setting::MONTHLY_FEE_DUE_DAY, '10');
+        Setting::set(Setting::PIX_KEY_TYPE, 'email');
+        Setting::set(Setting::PIX_KEY, 'grupo@exemplo.com');
+        Setting::set(Setting::PIX_RECEIVER_NAME, 'CARLOS MENEGATTI FC');
+        Setting::set(Setting::PIX_CITY, 'SAO PAULO');
     }
 
     public function test_monthly_fee_generation_is_idempotent(): void

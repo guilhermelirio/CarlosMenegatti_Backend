@@ -27,6 +27,14 @@ class GameSessionForm
                     ->seconds(false),
                 TextInput::make('location')
                     ->label('Local'),
+                TextInput::make('max_players')
+                    ->label('Limite de jogadores')
+                    ->numeric()
+                    ->integer()
+                    ->minValue(1)
+                    ->maxValue(100)
+                    ->default(20)
+                    ->required(),
                 MoneyField::make('daily_fee_cents', 'Valor da diária')
                     ->default(fn () => Setting::getInt(Setting::DEFAULT_DAILY_FEE_CENTS, 2000))
                     ->required(),

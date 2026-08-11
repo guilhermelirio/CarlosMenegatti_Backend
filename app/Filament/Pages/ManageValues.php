@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Integrations\Pix\Support\PigglyPixCode;
 use App\Models\Organization;
 use App\Models\Setting;
 use App\Models\User;
@@ -19,6 +20,8 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 use UnitEnum;
 
 /**
@@ -152,6 +155,14 @@ class ManageValues extends Page implements HasSchemas
     public function save(): void
     {
         $data = $this->form->getState();
+
+        try {
+            PigglyPixCode::validateKey((string) $data['pix_key_type'], (string) $data['pix_key']);
+        } catch (Throwable) {
+            throw ValidationException::withMessages([
+                'data.pix_key' => ['A chave Pix não corresponde ao tipo selecionado.'],
+            ]);
+        }
 
         Setting::set(Setting::DEFAULT_MONTHLY_FEE_CENTS, (string) (int) round(((float) $data['default_monthly_fee']) * 100));
         Setting::set(Setting::DEFAULT_DAILY_FEE_CENTS, (string) (int) round(((float) $data['default_daily_fee']) * 100));

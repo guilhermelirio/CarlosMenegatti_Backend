@@ -9,16 +9,40 @@ use App\Models\Attendance;
 use App\Models\DailyFee;
 use App\Models\GameSession;
 use App\Models\Player;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 final class AttendanceService
 {
     /** Create or update a player's attendance for a session. */
     public function register(GameSession $session, Player $player, bool $confirmed, bool $attended): Attendance
     {
-        return Attendance::query()->updateOrCreate(
-            ['game_session_id' => $session->id, 'player_id' => $player->id],
-            ['confirmed' => $confirmed, 'attended' => $attended],
-        );
+        return DB::transaction(function () use ($session, $player, $confirmed, $attended): Attendance {
+            $lockedSession = GameSession::query()->lockForUpdate()->findOrFail($session->id);
+            $existing = Attendance::query()
+                ->where('game_session_id', $lockedSession->id)
+                ->where('player_id', $player->id)
+                ->first();
+            $alreadyConfirmed = $existing !== null && $existing->confirmed;
+
+            if ($confirmed && ! $alreadyConfirmed) {
+                $confirmedCount = Attendance::query()
+                    ->where('game_session_id', $lockedSession->id)
+                    ->where('confirmed', true)
+                    ->count();
+
+                if ($confirmedCount >= $lockedSession->max_players) {
+                    throw ValidationException::withMessages([
+                        'confirmed' => ['O limite de jogadores deste jogo já foi atingido.'],
+                    ]);
+                }
+            }
+
+            return Attendance::query()->updateOrCreate(
+                ['game_session_id' => $lockedSession->id, 'player_id' => $player->id],
+                ['confirmed' => $confirmed, 'attended' => $attended],
+            );
+        });
     }
 
     /**

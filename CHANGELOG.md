@@ -54,6 +54,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 - **Separação de acesso**: atletas autenticam somente pela API do aplicativo e não entram no painel administrativo.
 - **Painel em largura total** e terminologia “Jogo” no painel e no contrato público da API.
 - **Exportações**: relatórios em PDF e CSV UTF-8 compatível com Excel.
+- **Cobranças no aplicativo**: listagem unificada e filtrável de mensalidades e diárias, consulta do detalhe e início de pagamento Pix sem remover os endpoints anteriores.
+- **Pix manual validado**: geração de BR Code e QR Code migrada para `piggly/php-pix`, com validação do tipo da chave, TXID compatível e erro estável para configuração inválida.
+- **Lotação dos jogos**: limite de jogadores configurável no painel, ocupação e vagas na API e bloqueio de novas confirmações quando o jogo está completo.
 - **Backup diário**: banco PostgreSQL e comprovantes privados, com arquivo verificável e criptografável,
   retenção automática, monitoramento de integridade e volumes persistentes separados em produção.
 - **Testes** (PHPUnit): fluxo de domínio, API, isolamento multi-tenant, regras e controles financeiros e smoke dos painéis Filament (42 testes).
@@ -72,3 +75,7 @@ CONTRACT_UPDATE: regras-financeiras-e-comprovantes (`gross_amount_cents`, descon
 `has_receipt` e upload/download em `/api/v1/payments/{payment}/receipt`)
 
 CONTRACT_UPDATE: jogos (`/api/v1/games`, `game_id` e `game_date` substituem os nomes públicos antigos com “session”)
+
+CONTRACT_UPDATE: cobrancas-app (`GET /api/v1/me/charges`, `GET /api/v1/charges/{charge}` e
+`POST /api/v1/charges/{charge}/pix`; jogos passam a informar `max_players`, `confirmed_count`,
+`available_spots` e `is_full`)

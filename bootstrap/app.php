@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\ResolveOrganization;
+use App\Integrations\Pix\Exceptions\PixConfigurationException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
@@ -39,6 +40,10 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return match (true) {
+                $e instanceof PixConfigurationException => response()->json([
+                    'message' => $e->getMessage(),
+                    'error_code' => 'PIX_CONFIGURATION_INVALID',
+                ], 503),
                 $e instanceof ValidationException => response()->json([
                     'message' => $e->getMessage(),
                     'error_code' => 'VALIDATION_FAILED',

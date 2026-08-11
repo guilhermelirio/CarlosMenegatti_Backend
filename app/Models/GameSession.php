@@ -20,12 +20,14 @@ class GameSession extends Model
         'scheduled_date',
         'start_time',
         'location',
+        'max_players',
         'daily_fee_cents',
         'notes',
     ];
 
     protected $casts = [
         'scheduled_date' => 'date',
+        'max_players' => 'integer',
         'daily_fee_cents' => 'integer',
     ];
 
