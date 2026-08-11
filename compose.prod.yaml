@@ -13,6 +13,8 @@ x-app: &app
             condition: service_healthy
     volumes:
         - app-storage:/var/www/html/storage/app/public
+        - app-private:/var/www/html/storage/app/private
+        - app-backups:/var/www/html/storage/app/backups
     networks: [app]
 
 services:
@@ -76,5 +78,7 @@ networks:
 
 volumes:
     app-storage:
+    app-private:
+    app-backups:
     postgres-data:
     redis-data:

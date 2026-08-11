@@ -50,6 +50,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   com armazenamento privado e download autorizado.
 - **Perfis administrativos**: administrador, tesoureiro e somente consulta, preservando `member` para acesso do atleta.
 - **Exportações**: relatórios em PDF e CSV UTF-8 compatível com Excel.
+- **Backup diário**: banco PostgreSQL e comprovantes privados, com arquivo verificável e criptografável,
+  retenção automática, monitoramento de integridade e volumes persistentes separados em produção.
 - **Testes** (PHPUnit): fluxo de domínio, API, isolamento multi-tenant, regras e controles financeiros e smoke dos painéis Filament (42 testes).
 
 ### Notes
